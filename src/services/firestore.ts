@@ -1,0 +1,27 @@
+// Re-export all database operations from the unified API service
+// for 100% backwards compatibility with existing components
+export {
+  getTeams,
+  getTeamById,
+  addCharacterToTeam,
+  getCharacters,
+  getCards,
+  getUncaughtCards,
+  getCardsCaughtByTeam,
+  markCardAsCaught,
+  getARCharacters,
+  getCharacterById,
+  catchCharacter,
+  isCharacterCaught,
+  resetDatabase,
+  createDatabaseSnapshot,
+  restoreDatabaseFromSnapshot,
+  createTeam,
+  updateTeam,
+  deleteTeam,
+  createCard,
+  updateCard,
+  deleteCard,
+  checkCounters,
+  initializeFirestoreCounters,
+} from './api';

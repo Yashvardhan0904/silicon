@@ -1,0 +1,12 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/api/admin/reset/route": "/api/admin/reset",
+  "/api/admin/setup/route": "/api/admin/setup",
+  "/api/cards/[id]/catch/route": "/api/cards/[id]/catch",
+  "/api/cards/[id]/route": "/api/cards/[id]",
+  "/api/cards/route": "/api/cards",
+  "/api/teams/[id]/route": "/api/teams/[id]",
+  "/api/teams/route": "/api/teams",
+  "/favicon.ico/route": "/favicon.ico",
+  "/page": "/"
+}

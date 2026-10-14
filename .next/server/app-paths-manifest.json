@@ -1,0 +1,6 @@
+{
+  "/api/admin/setup/route": "app/api/admin/setup/route.js",
+  "/api/cards/route": "app/api/cards/route.js",
+  "/api/teams/route": "app/api/teams/route.js",
+  "/page": "app/page.js"
+}
