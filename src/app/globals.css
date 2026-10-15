@@ -1,14 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --primary: #8b5cf6;
-  --primary-dark: #7c3aed;
-  --secondary: #10b981;
-  --accent: #f59e0b;
-  --card-bg: #1a1a2e;
-  --border: #2d2d44;
+  --background: #080808;
+  --foreground: #ffffff;
+  --primary: #ff6b00;
+  --primary-glow: rgba(255, 107, 0, 0.45);
+  --secondary: #ff8c00;
+  --accent: #ffa726;
+  --card-bg: #121212;
+  --card-surface: #181818;
+  --border: #262626;
+  --border-active: #ff6b00;
 }
 
 @theme inline {
@@ -22,6 +24,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
 }
 
 * {
@@ -37,42 +40,133 @@ body {
   -webkit-touch-callout: none;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1a1a2e;
+  background: #0f0f0f;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2d2d44;
+  background: #2a2a2a;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3d3d54;
+  background: #ff6b00;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Anime Visual Accents */
+.anime-grid-bg {
+  background-color: #070707;
+  background-image: 
+    linear-gradient(rgba(255, 107, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 107, 0, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.anime-card-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.anime-card-sheen::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.08) 45%,
+    rgba(255, 107, 0, 0.15) 50%,
+    transparent 55%
+  );
+  transform: rotate(25deg);
+  pointer-events: none;
 }
 
 /* Animations */
 @keyframes shake {
-  0%,
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+@keyframes radar-sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes energy-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(255, 107, 0, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 35px rgba(255, 107, 0, 0.65);
+  }
+}
+
+@keyframes holo-shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes explode {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 0.6;
+  }
   100% {
-    transform: translateX(0);
+    transform: scale(2.2);
+    opacity: 0;
   }
-  10%,
-  30%,
-  50%,
-  70%,
-  90% {
-    transform: translateX(-5px);
+}
+
+@keyframes pulse-fast {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.85);
+    opacity: 0;
   }
-  20%,
-  40%,
-  60%,
-  80% {
-    transform: translateX(5px);
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }
 
@@ -80,86 +174,26 @@ body {
   animation: shake 0.5s ease-in-out;
 }
 
-/* Animations for AR Camera */
-@keyframes explode {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.5);
-    opacity: 0.5;
-  }
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
+.animate-radar {
+  animation: radar-sweep 6s linear infinite;
 }
 
-@keyframes pulse-fast {
-  0%,
-  100% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@keyframes scan {
-  0% {
-    transform: translateY(-100%);
-    opacity: 0;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(100vh);
-    opacity: 0;
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    transform: scale(0.5);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes expandIn {
-  from {
-    transform: scale(0.8);
-    opacity: 0;
-    max-height: 100px;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-    max-height: 600px;
-  }
+.animate-energy-pulse {
+  animation: energy-pulse 2.5s ease-in-out infinite;
 }
 
 .animate-explode {
-  animation: explode 0.6s ease-out forwards;
+  animation: explode 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-pulse-fast {
-  animation: pulse-fast 0.5s ease-in-out infinite;
-}
-
-.animate-scan {
-  animation: scan 3s linear infinite;
+  animation: pulse-fast 0.6s ease-in-out infinite;
 }
 
 .animate-scaleIn {
-  animation: scaleIn 0.4s ease-out forwards;
+  animation: scaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.animate-expandIn {
-  animation: expandIn 0.6s ease-out forwards;
+.animate-slideUp {
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

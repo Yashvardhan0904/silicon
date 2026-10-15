@@ -1,6 +1,12 @@
 import { createElement, MutableRefObject, useMemo } from "react";
 
-import { Character, MindARSceneElement, Tier, TIER_CONFIG } from "../types";
+import {
+  Character,
+  getTargetIndexFromId,
+  MindARSceneElement,
+  Tier,
+  TIER_CONFIG,
+} from "../types";
 
 interface MindARSceneProps {
   sceneRef: MutableRefObject<MindARSceneElement | null>;
@@ -20,15 +26,24 @@ export const MindARScene = ({
   registerTargetRef,
   selectedTier,
 }: MindARSceneProps) => {
-  // Get the .mind file for the selected tier
+  // Get the .mind file for the selected tier (support remote or local URL)
   const targetSrc = useMemo(() => {
-    return `/ar-targets/${TIER_CONFIG[selectedTier].mindFile}`;
+    const rawFile = TIER_CONFIG[selectedTier].mindFile;
+    if (rawFile.startsWith("http://") || rawFile.startsWith("https://")) {
+      return rawFile;
+    }
+    const baseStorage = process.env.NEXT_PUBLIC_AR_STORAGE_URL;
+    if (baseStorage) {
+      return `${baseStorage.replace(/\/$/, "")}/${rawFile.replace(/^\//, "")}`;
+    }
+    return rawFile.startsWith("/") ? rawFile : `/ar-targets/${rawFile}`;
   }, [selectedTier]);
+
   return createElement(
     "a-scene",
     {
       ref: sceneRef,
-      // here - MindAR automatically accesses device camera when mindar-image is initialized
+      // MindAR automatically accesses device camera when mindar-image is initialized
       "mindar-image": `imageTargetSrc: ${targetSrc}; filterMinCF:0.0001; filterBeta: 10`,
       "color-space": "sRGB",
       renderer:
@@ -36,7 +51,7 @@ export const MindARScene = ({
       "vr-mode-ui": "enabled: false",
       "device-orientation-permission-ui": "enabled: false",
       embedded: true,
-      className: "mindar-scene w-[100vw] h-[100vh]",
+      className: "mindar-scene w-full h-full",
     },
 
     createElement(
@@ -54,7 +69,7 @@ export const MindARScene = ({
             })
         )
     ),
-    // here - a-camera element renders the AR camera view
+    // a-camera element renders the AR camera view
     createElement("a-camera", {
       position: "0 0 0",
     }),
@@ -66,43 +81,28 @@ export const MindARScene = ({
       position: "0 1 0",
     }),
     // Render a target entity for each character in the selected tier
-
     characters.length > 0 &&
-      characters.map((character, index) =>
-        createElement(
+      characters.map((character, index) => {
+        const idIndex = getTargetIndexFromId(character.id);
+        const targetIndex = idIndex >= 0 ? idIndex : index;
+
+        return createElement(
           "a-entity",
           {
             key: character.id,
-            ref: registerTargetRef(character.id, index),
-            "mindar-image-target": `targetIndex: ${index}`,
+            ref: registerTargetRef(character.id, targetIndex),
+            "mindar-image-target": `targetIndex: ${targetIndex}`,
           },
           character.modelUrl &&
             createElement("a-gltf-model", {
-              src: `#character-model-${character.id}`, // Using the modelUrl from the character data
+              src: `#character-model-${character.id}`,
               position: "0 0 0",
               rotation: "60 0 0",
               scale: "1 1 1",
               "animation-mixer":
                 "clip: pm0149_00_00_20001_battlewait01_loop; loop: repeat",
             })
-          // : createElement(
-          //     "a-plane",
-          //     {
-          //       position: "0 0 0",
-          //       rotation: "0 0 0",
-          //       height: "0.8",
-          //       width: "0.8",
-          //       color: TIER_CONFIG[selectedTier].color,
-          //     },
-          //     createElement("a-text", {
-          //       value: character.name,
-          //       position: "0 0 0.1",
-          //       align: "center",
-          //       width: "1.5",
-          //       color: "#ffffff",
-          //     })
-          //   )
-        )
-      )
+        );
+      })
   );
 };

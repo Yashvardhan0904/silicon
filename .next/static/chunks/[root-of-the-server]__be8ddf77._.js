@@ -948,12 +948,16 @@ __turbopack_context__.s([
     ()=>CardsManagement
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+;
+var _s = __turbopack_context__.k.signature();
 ;
 const CardsManagement = (param)=>{
     let { cards, isLoading, deleteConfirm, onAddCard, onEditCard, onDeleteCard, onCancelDelete } = param;
+    _s();
+    const [compilingCardId, setCompilingCardId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
+    const [compileStatus, setCompileStatus] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const getTierBadge = (card)=>{
-        // Determine tier based on card ID prefix
-        // c1xxx = Legendary, c2xxx = Rare, c3xxx = Common
         const cardId = card.id.toLowerCase();
         let tierColor = "bg-purple-600";
         let tierName = "Common";
@@ -972,21 +976,98 @@ const CardsManagement = (param)=>{
             children: tierName
         }, void 0, false, {
             fileName: "[project]/src/components/admin/CardsManagement.tsx",
-            lineNumber: 52,
+            lineNumber: 55,
             columnNumber: 7
         }, ("TURBOPACK compile-time value", void 0));
+    };
+    const handleCompileCard = async (card)=>{
+        if (!card.image) {
+            alert("This card does not have an image URL to compile!");
+            return;
+        }
+        try {
+            var _MINDAR_IMAGE, _MINDAR;
+            setCompilingCardId(card.id);
+            setCompileStatus("Loading compiler...");
+            // Ensure compiler script is loaded
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (!((_MINDAR = window.MINDAR) === null || _MINDAR === void 0 ? void 0 : (_MINDAR_IMAGE = _MINDAR.IMAGE) === null || _MINDAR_IMAGE === void 0 ? void 0 : _MINDAR_IMAGE.Compiler)) {
+                await new Promise((resolve, reject)=>{
+                    const script = document.createElement("script");
+                    script.src = "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js";
+                    script.onload = ()=>resolve();
+                    script.onerror = ()=>reject(new Error("Failed to load MindAR compiler library"));
+                    document.head.appendChild(script);
+                });
+            }
+            setCompileStatus("Loading image...");
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.src = card.image;
+            await new Promise((resolve, reject)=>{
+                img.onload = ()=>resolve();
+                img.onerror = ()=>reject(new Error("Failed to load card image from URL"));
+            });
+            setCompileStatus("Compiling...");
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const compiler = new window.MINDAR.IMAGE.Compiler();
+            await compiler.compileImageTargets([
+                img
+            ], (progress)=>{
+                setCompileStatus("Compiling: ".concat(Math.round(progress * 100), "%"));
+            });
+            setCompileStatus("Exporting...");
+            const exportedBuffer = await compiler.exportData();
+            setCompileStatus("Saving...");
+            let tier = "common";
+            if (card.id.toLowerCase().startsWith("c1")) tier = "legendary";
+            else if (card.id.toLowerCase().startsWith("c2")) tier = "rare";
+            const res = await fetch("/api/targets?tier=".concat(tier, "&filename=").concat(tier, ".mind"), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/octet-stream"
+                },
+                body: exportedBuffer
+            });
+            if (!res.ok) throw new Error("Failed to save target on server");
+            setCompileStatus("Done!");
+            alert('Success! Card "'.concat(card.name, '" compiled and saved to ').concat(tier, ".mind!"));
+        } catch (err) {
+            console.error("Compile error:", err);
+            const message = err instanceof Error ? err.message : String(err);
+            alert("Error compiling AR target: ".concat(message));
+        } finally{
+            setCompilingCardId(null);
+            setCompileStatus(null);
+        }
     };
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "flex justify-between items-center mb-4",
                 children: [
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
-                        className: "text-xl font-semibold text-white",
-                        children: "Cards"
-                    }, void 0, false, {
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                className: "text-xl font-semibold text-white",
+                                children: "Cards"
+                            }, void 0, false, {
+                                fileName: "[project]/src/components/admin/CardsManagement.tsx",
+                                lineNumber: 139,
+                                columnNumber: 11
+                            }, ("TURBOPACK compile-time value", void 0)),
+                            compileStatus && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                className: "text-xs text-orange-400 font-mono animate-pulse",
+                                children: compileStatus
+                            }, void 0, false, {
+                                fileName: "[project]/src/components/admin/CardsManagement.tsx",
+                                lineNumber: 141,
+                                columnNumber: 13
+                            }, ("TURBOPACK compile-time value", void 0))
+                        ]
+                    }, void 0, true, {
                         fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                        lineNumber: 63,
+                        lineNumber: 138,
                         columnNumber: 9
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -995,13 +1076,13 @@ const CardsManagement = (param)=>{
                         children: "Add New Card"
                     }, void 0, false, {
                         fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                        lineNumber: 64,
+                        lineNumber: 146,
                         columnNumber: 9
                     }, ("TURBOPACK compile-time value", void 0))
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                lineNumber: 62,
+                lineNumber: 137,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             isLoading ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1011,7 +1092,7 @@ const CardsManagement = (param)=>{
                         className: "inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"
                     }, void 0, false, {
                         fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                        lineNumber: 75,
+                        lineNumber: 157,
                         columnNumber: 11
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1019,13 +1100,13 @@ const CardsManagement = (param)=>{
                         children: "Loading cards..."
                     }, void 0, false, {
                         fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                        lineNumber: 76,
+                        lineNumber: 158,
                         columnNumber: 11
                     }, ("TURBOPACK compile-time value", void 0))
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                lineNumber: 74,
+                lineNumber: 156,
                 columnNumber: 9
             }, ("TURBOPACK compile-time value", void 0)) : cards.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "text-center py-8",
@@ -1034,12 +1115,12 @@ const CardsManagement = (param)=>{
                     children: "No cards found. Create one to get started!"
                 }, void 0, false, {
                     fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                    lineNumber: 80,
+                    lineNumber: 162,
                     columnNumber: 11
                 }, ("TURBOPACK compile-time value", void 0))
             }, void 0, false, {
                 fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                lineNumber: 79,
+                lineNumber: 161,
                 columnNumber: 9
             }, ("TURBOPACK compile-time value", void 0)) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "overflow-x-auto",
@@ -1055,7 +1136,7 @@ const CardsManagement = (param)=>{
                                         children: "ID"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                        lineNumber: 89,
+                                        lineNumber: 171,
                                         columnNumber: 17
                                     }, ("TURBOPACK compile-time value", void 0)),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -1063,7 +1144,7 @@ const CardsManagement = (param)=>{
                                         children: "Name"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                        lineNumber: 92,
+                                        lineNumber: 174,
                                         columnNumber: 17
                                     }, ("TURBOPACK compile-time value", void 0)),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -1071,7 +1152,7 @@ const CardsManagement = (param)=>{
                                         children: "Question"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                        lineNumber: 95,
+                                        lineNumber: 177,
                                         columnNumber: 17
                                     }, ("TURBOPACK compile-time value", void 0)),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -1079,7 +1160,7 @@ const CardsManagement = (param)=>{
                                         children: "Tier"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                        lineNumber: 98,
+                                        lineNumber: 180,
                                         columnNumber: 17
                                     }, ("TURBOPACK compile-time value", void 0)),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -1087,7 +1168,7 @@ const CardsManagement = (param)=>{
                                         children: "Status"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                        lineNumber: 101,
+                                        lineNumber: 183,
                                         columnNumber: 17
                                     }, ("TURBOPACK compile-time value", void 0)),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -1095,7 +1176,7 @@ const CardsManagement = (param)=>{
                                         children: "Caught By"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                        lineNumber: 104,
+                                        lineNumber: 186,
                                         columnNumber: 17
                                     }, ("TURBOPACK compile-time value", void 0)),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -1103,18 +1184,18 @@ const CardsManagement = (param)=>{
                                         children: "Actions"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                        lineNumber: 107,
+                                        lineNumber: 189,
                                         columnNumber: 17
                                     }, ("TURBOPACK compile-time value", void 0))
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                lineNumber: 88,
+                                lineNumber: 170,
                                 columnNumber: 15
                             }, ("TURBOPACK compile-time value", void 0))
                         }, void 0, false, {
                             fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                            lineNumber: 87,
+                            lineNumber: 169,
                             columnNumber: 13
                         }, ("TURBOPACK compile-time value", void 0)),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("tbody", {
@@ -1126,7 +1207,7 @@ const CardsManagement = (param)=>{
                                             children: card.id
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                            lineNumber: 118,
+                                            lineNumber: 200,
                                             columnNumber: 19
                                         }, ("TURBOPACK compile-time value", void 0)),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
@@ -1134,7 +1215,7 @@ const CardsManagement = (param)=>{
                                             children: card.name
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                            lineNumber: 121,
+                                            lineNumber: 203,
                                             columnNumber: 19
                                         }, ("TURBOPACK compile-time value", void 0)),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
@@ -1144,12 +1225,12 @@ const CardsManagement = (param)=>{
                                                 children: card.question
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                                lineNumber: 125,
+                                                lineNumber: 207,
                                                 columnNumber: 21
                                             }, ("TURBOPACK compile-time value", void 0))
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                            lineNumber: 124,
+                                            lineNumber: 206,
                                             columnNumber: 19
                                         }, ("TURBOPACK compile-time value", void 0)),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
@@ -1157,71 +1238,29 @@ const CardsManagement = (param)=>{
                                             children: getTierBadge(card)
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                            lineNumber: 129,
+                                            lineNumber: 211,
                                             columnNumber: 19
                                         }, ("TURBOPACK compile-time value", void 0)),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
                                             className: "px-4 py-3",
                                             children: card.isCaught ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                 className: "inline-flex items-center gap-1 bg-green-900/30 text-green-400 text-xs px-2 py-1 rounded-full border border-green-500/30",
-                                                children: [
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("svg", {
-                                                        xmlns: "http://www.w3.org/2000/svg",
-                                                        className: "h-3 w-3",
-                                                        viewBox: "0 0 20 20",
-                                                        fill: "currentColor",
-                                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
-                                                            fillRule: "evenodd",
-                                                            d: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z",
-                                                            clipRule: "evenodd"
-                                                        }, void 0, false, {
-                                                            fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                                            lineNumber: 139,
-                                                            columnNumber: 27
-                                                        }, ("TURBOPACK compile-time value", void 0))
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                                        lineNumber: 133,
-                                                        columnNumber: 25
-                                                    }, ("TURBOPACK compile-time value", void 0)),
-                                                    "Caught"
-                                                ]
-                                            }, void 0, true, {
+                                                children: "Caught"
+                                            }, void 0, false, {
                                                 fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                                lineNumber: 132,
+                                                lineNumber: 214,
                                                 columnNumber: 23
                                             }, ("TURBOPACK compile-time value", void 0)) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                 className: "inline-flex items-center gap-1 bg-blue-900/30 text-blue-400 text-xs px-2 py-1 rounded-full border border-blue-500/30",
-                                                children: [
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("svg", {
-                                                        xmlns: "http://www.w3.org/2000/svg",
-                                                        className: "h-3 w-3",
-                                                        viewBox: "0 0 20 20",
-                                                        fill: "currentColor",
-                                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
-                                                            fillRule: "evenodd",
-                                                            d: "M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z",
-                                                            clipRule: "evenodd"
-                                                        }, void 0, false, {
-                                                            fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                                            lineNumber: 155,
-                                                            columnNumber: 27
-                                                        }, ("TURBOPACK compile-time value", void 0))
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                                        lineNumber: 149,
-                                                        columnNumber: 25
-                                                    }, ("TURBOPACK compile-time value", void 0)),
-                                                    "Available"
-                                                ]
-                                            }, void 0, true, {
+                                                children: "Available"
+                                            }, void 0, false, {
                                                 fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                                lineNumber: 148,
+                                                lineNumber: 218,
                                                 columnNumber: 23
                                             }, ("TURBOPACK compile-time value", void 0))
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                            lineNumber: 130,
+                                            lineNumber: 212,
                                             columnNumber: 19
                                         }, ("TURBOPACK compile-time value", void 0)),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
@@ -1231,19 +1270,19 @@ const CardsManagement = (param)=>{
                                                 children: card.caughtByTeam
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                                lineNumber: 167,
+                                                lineNumber: 225,
                                                 columnNumber: 23
                                             }, ("TURBOPACK compile-time value", void 0)) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                 className: "text-gray-600",
                                                 children: "—"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                                lineNumber: 169,
+                                                lineNumber: 227,
                                                 columnNumber: 23
                                             }, ("TURBOPACK compile-time value", void 0))
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                            lineNumber: 165,
+                                            lineNumber: 223,
                                             columnNumber: 19
                                         }, ("TURBOPACK compile-time value", void 0)),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
@@ -1252,12 +1291,23 @@ const CardsManagement = (param)=>{
                                                 className: "flex gap-2 justify-end",
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                        onClick: ()=>handleCompileCard(card),
+                                                        disabled: compilingCardId === card.id,
+                                                        className: "px-2.5 py-1 bg-orange-600 hover:bg-orange-500 text-white rounded transition-colors text-xs whitespace-nowrap font-mono font-bold",
+                                                        title: "Compile card image into .mind file",
+                                                        children: compilingCardId === card.id ? compileStatus || "Compiling..." : "⚡ Compile AR"
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/components/admin/CardsManagement.tsx",
+                                                        lineNumber: 232,
+                                                        columnNumber: 23
+                                                    }, ("TURBOPACK compile-time value", void 0)),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                                         onClick: ()=>onEditCard(card),
                                                         className: "px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors text-sm whitespace-nowrap",
                                                         children: "Edit"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                                        lineNumber: 174,
+                                                        lineNumber: 243,
                                                         columnNumber: 23
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1273,49 +1323,50 @@ const CardsManagement = (param)=>{
                                                         children: deleteConfirm === card.id ? "Confirm?" : "Delete"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                                        lineNumber: 181,
+                                                        lineNumber: 250,
                                                         columnNumber: 23
                                                     }, ("TURBOPACK compile-time value", void 0))
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                                lineNumber: 173,
+                                                lineNumber: 231,
                                                 columnNumber: 21
                                             }, ("TURBOPACK compile-time value", void 0))
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                            lineNumber: 172,
+                                            lineNumber: 230,
                                             columnNumber: 19
                                         }, ("TURBOPACK compile-time value", void 0))
                                     ]
                                 }, card.id, true, {
                                     fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                                    lineNumber: 114,
+                                    lineNumber: 196,
                                     columnNumber: 17
                                 }, ("TURBOPACK compile-time value", void 0)))
                         }, void 0, false, {
                             fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                            lineNumber: 112,
+                            lineNumber: 194,
                             columnNumber: 13
                         }, ("TURBOPACK compile-time value", void 0))
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                    lineNumber: 86,
+                    lineNumber: 168,
                     columnNumber: 11
                 }, ("TURBOPACK compile-time value", void 0))
             }, void 0, false, {
                 fileName: "[project]/src/components/admin/CardsManagement.tsx",
-                lineNumber: 85,
+                lineNumber: 167,
                 columnNumber: 9
             }, ("TURBOPACK compile-time value", void 0))
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/admin/CardsManagement.tsx",
-        lineNumber: 61,
+        lineNumber: 136,
         columnNumber: 5
     }, ("TURBOPACK compile-time value", void 0));
 };
+_s(CardsManagement, "7mX01eV/+4mCH3sb+zN/oTopuS0=");
 _c = CardsManagement;
 var _c;
 __turbopack_context__.k.register(_c, "CardsManagement");

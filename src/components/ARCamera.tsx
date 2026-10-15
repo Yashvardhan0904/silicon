@@ -102,6 +102,20 @@ export default function ARCamera({
     }
   }, [charactersError, loadingCharacters, charactersByTier, setARError]);
 
+  // Auto-select tier with characters on load
+  useEffect(() => {
+    if (!loadingCharacters) {
+      if ((charactersByTier[selectedTier]?.length ?? 0) === 0) {
+        const availableTier = (["Legendary", "Rare", "Common"] as Tier[]).find(
+          (tier) => (charactersByTier[tier]?.length ?? 0) > 0
+        );
+        if (availableTier) {
+          setSelectedTier(availableTier);
+        }
+      }
+    }
+  }, [loadingCharacters, charactersByTier, selectedTier]);
+
   useEffect(() => {
     showQuizRef.current = showQuiz;
   }, [showQuiz]);
@@ -231,9 +245,15 @@ export default function ARCamera({
 
             activeTargetRef.current = { characterId, targetIndex };
             setDetectedCharacter(character);
-            setShowQuiz(false);
             setSelectedAnswer(null);
             setQuizResult(null);
+
+            // If not caught and not on cooldown, open quiz modal immediately
+            if (!character.isCaught && (!cooldown || cooldown <= 0)) {
+              setShowQuiz(true);
+            } else {
+              setShowQuiz(false);
+            }
           };
 
           const onLost = () => {
@@ -407,7 +427,7 @@ export default function ARCamera({
           !arError &&
           !loadingCharacters &&
           currentTierCharacters.length > 0 && (
-            <div className="absolute inset-0 w-[100vw] h-[100vh] sm:mx-0 mx-[30vw]">
+            <div className="absolute inset-0 w-full h-full">
               <MindARScene
                 key={selectedTier}
                 sceneRef={sceneRef}
@@ -416,6 +436,22 @@ export default function ARCamera({
                 registerTargetRef={registerTargetRef}
                 selectedTier={selectedTier}
               />
+            </div>
+          )}
+
+        {scriptsLoaded &&
+          !arError &&
+          !loadingCharacters &&
+          currentTierCharacters.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center p-6 text-center z-10 pointer-events-none">
+              <div className="bg-black/90 border border-orange-500/40 rounded-2xl p-5 max-w-xs shadow-2xl">
+                <p className="text-orange-400 font-mono font-bold text-sm mb-1">
+                  NO {selectedTier.toUpperCase()} TARGETS
+                </p>
+                <p className="text-zinc-400 text-xs font-mono">
+                  There are no cards in this tier. Use the top bar to switch to another tier.
+                </p>
+              </div>
             </div>
           )}
 

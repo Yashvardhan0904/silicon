@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 interface Card {
   id: string;
   name: string;
@@ -30,9 +32,10 @@ export const CardsManagement = ({
   onDeleteCard,
   onCancelDelete,
 }: CardsManagementProps) => {
+  const [compilingCardId, setCompilingCardId] = useState<string | null>(null);
+  const [compileStatus, setCompileStatus] = useState<string | null>(null);
+
   const getTierBadge = (card: Card) => {
-    // Determine tier based on card ID prefix
-    // c1xxx = Legendary, c2xxx = Rare, c3xxx = Common
     const cardId = card.id.toLowerCase();
     let tierColor = "bg-purple-600";
     let tierName = "Common";
@@ -57,10 +60,89 @@ export const CardsManagement = ({
     );
   };
 
+  const handleCompileCard = async (card: Card) => {
+    if (!card.image) {
+      alert("This card does not have an image URL to compile!");
+      return;
+    }
+
+    try {
+      setCompilingCardId(card.id);
+      setCompileStatus("Loading compiler...");
+
+      // Ensure compiler script is loaded
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (!(window as any).MINDAR?.IMAGE?.Compiler) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src =
+            "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js";
+          script.onload = () => resolve();
+          script.onerror = () =>
+            reject(new Error("Failed to load MindAR compiler library"));
+          document.head.appendChild(script);
+        });
+      }
+
+      setCompileStatus("Loading image...");
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = card.image;
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () =>
+          reject(new Error("Failed to load card image from URL"));
+      });
+
+      setCompileStatus("Compiling...");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const compiler = new (window as any).MINDAR.IMAGE.Compiler();
+      await compiler.compileImageTargets([img], (progress: number) => {
+        setCompileStatus(`Compiling: ${Math.round(progress * 100)}%`);
+      });
+
+      setCompileStatus("Exporting...");
+      const exportedBuffer = await compiler.exportData();
+
+      setCompileStatus("Saving...");
+      let tier = "common";
+      if (card.id.toLowerCase().startsWith("c1")) tier = "legendary";
+      else if (card.id.toLowerCase().startsWith("c2")) tier = "rare";
+
+      const res = await fetch(
+        `/api/targets?tier=${tier}&filename=${tier}.mind`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/octet-stream" },
+          body: exportedBuffer,
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to save target on server");
+
+      setCompileStatus("Done!");
+      alert(`Success! Card "${card.name}" compiled and saved to ${tier}.mind!`);
+    } catch (err: unknown) {
+      console.error("Compile error:", err);
+      const message = err instanceof Error ? err.message : String(err);
+      alert(`Error compiling AR target: ${message}`);
+    } finally {
+      setCompilingCardId(null);
+      setCompileStatus(null);
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold text-white">Cards</h3>
+        <div>
+          <h3 className="text-xl font-semibold text-white">Cards</h3>
+          {compileStatus && (
+            <p className="text-xs text-orange-400 font-mono animate-pulse">
+              {compileStatus}
+            </p>
+          )}
+        </div>
         <button
           onClick={onAddCard}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md 
@@ -130,34 +212,10 @@ export const CardsManagement = ({
                   <td className="px-4 py-3">
                     {card.isCaught ? (
                       <span className="inline-flex items-center gap-1 bg-green-900/30 text-green-400 text-xs px-2 py-1 rounded-full border border-green-500/30">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-3 w-3"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
                         Caught
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 bg-blue-900/30 text-blue-400 text-xs px-2 py-1 rounded-full border border-blue-500/30">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-3 w-3"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
                         Available
                       </span>
                     )}
@@ -171,6 +229,17 @@ export const CardsManagement = ({
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex gap-2 justify-end">
+                      <button
+                        onClick={() => handleCompileCard(card)}
+                        disabled={compilingCardId === card.id}
+                        className="px-2.5 py-1 bg-orange-600 hover:bg-orange-500 text-white rounded
+                                 transition-colors text-xs whitespace-nowrap font-mono font-bold"
+                        title="Compile card image into .mind file"
+                      >
+                        {compilingCardId === card.id
+                          ? compileStatus || "Compiling..."
+                          : "⚡ Compile AR"}
+                      </button>
                       <button
                         onClick={() => onEditCard(card)}
                         className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded

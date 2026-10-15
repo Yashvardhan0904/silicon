@@ -24,10 +24,10 @@ export default function Home() {
   const [isPokeballExploding, setIsPokeballExploding] = useState(false);
   const [showUncaughtModal, setShowUncaughtModal] = useState(false);
   const [uncaughtCount, setUncaughtCount] = useState<number | null>(null);
-  const [isLoadingUncaughtCount, setIsLoadingUncaughtCount] = useState(true);
   const [teamSearchQuery, setTeamSearchQuery] = useState("");
+  const [activeBottomTab, setActiveBottomTab] = useState<"collection" | "leaderboard">("collection");
 
-  // Load teams from Firestore
+  // Load teams
   useEffect(() => {
     const fetchTeams = async () => {
       try {
@@ -44,7 +44,7 @@ export default function Home() {
     fetchTeams();
   }, []);
 
-  // Load selected team from localStorage on mount
+  // Load selected team from localStorage
   useEffect(() => {
     const storedTeamId = localStorage.getItem("selectedTeamId");
     if (storedTeamId) {
@@ -67,20 +67,16 @@ export default function Home() {
 
   const loadUncaughtCount = useCallback(async () => {
     try {
-      setIsLoadingUncaughtCount(true);
       const cards = await getUncaughtCards();
       setUncaughtCount(cards.length);
     } catch (error) {
       console.error("Error loading uncaught characters count:", error);
-    } finally {
-      setIsLoadingUncaughtCount(false);
     }
   }, []);
 
-  // Load uncaught count only once on mount
   useEffect(() => {
     loadUncaughtCount();
-  }, []); // Remove loadUncaughtCount from dependencies to prevent infinite loop
+  }, [loadUncaughtCount]);
 
   useEffect(() => {
     if (selectedTeamId) {
@@ -100,11 +96,10 @@ export default function Home() {
 
     setIsPokeballExploding(true);
 
-    // Wait for explosion animation to complete, then show AR camera
     setTimeout(() => {
       setIsARActive(true);
       setIsPokeballExploding(false);
-    }, 600);
+    }, 550);
   };
 
   const handleARClose = () => {
@@ -114,6 +109,8 @@ export default function Home() {
   const handleCharacterCollected = () => {
     if (selectedTeamId) {
       fetchCaughtCharacters(selectedTeamId);
+      // Re-fetch teams to get updated team score for the leaderboard
+      getTeams().then(setTeams).catch(console.error);
     }
 
     setUncaughtCount((prev) =>
@@ -121,7 +118,6 @@ export default function Home() {
     );
   };
 
-  // Memoized callback to prevent infinite loop in UncaughtCharacters component
   const handleUncaughtCountChange = useCallback((count: number) => {
     setUncaughtCount(count);
   }, []);
@@ -131,337 +127,312 @@ export default function Home() {
     localStorage.removeItem("selectedTeamId");
     setCharactersCaught([]);
     setIsARActive(false);
-    setTeamSearchQuery(""); // Clear search when changing team
+    setTeamSearchQuery("");
   };
 
   const selectedTeam = teams.find((t) => t.id === selectedTeamId);
 
-  // Filter teams based on search query
   const filteredTeams = teams.filter((team) =>
     team.teamName.toLowerCase().includes(teamSearchQuery.toLowerCase())
   );
 
   if (isLoadingTeams) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-purple-950/20 to-slate-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-purple-300">Loading teams...</p>
-        </div>
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center anime-grid-bg p-4">
+        <div className="w-12 h-12 border-3 border-orange-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+        <p className="text-white font-mono text-xs uppercase tracking-widest animate-pulse-fast">
+          INITIALIZING HUNTER OS...
+        </p>
       </div>
     );
   }
 
   return (
-    <>
-      <style jsx global>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
+    <div className="min-h-screen bg-[#070707] text-white anime-grid-bg flex flex-col items-center justify-start p-3 sm:p-5 select-none">
+      <div className="w-full max-w-md flex flex-col gap-4 animate-fadeIn">
+        {/* Top Header */}
+        <Header />
 
-        .animate-fadeIn {
-          animation: fadeIn 0.6s ease-out;
-        }
+        {/* ============================================================== */}
+        {/* PHASE 1: TEAM SELECTION LOBBY (If no team selected)           */}
+        {/* ============================================================== */}
+        {!selectedTeam ? (
+          <div className="flex flex-col gap-4 animate-slideUp">
+            {/* Mission Brief Card */}
+            <div className="bg-zinc-950/90 border-2 border-orange-500/40 rounded-2xl p-4 sm:p-5 shadow-xl shadow-orange-500/5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-        .scrollbar-thin::-webkit-scrollbar {
-          width: 6px;
-        }
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-zinc-800">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse-fast"></span>
+                  <h2 className="font-mono font-black text-sm tracking-wider text-white">
+                    SELECT YOUR SQUAD
+                  </h2>
+                </div>
+                <span className="text-[10px] font-mono text-orange-400 bg-orange-500/10 border border-orange-500/30 px-2 py-0.5 rounded">
+                  {teams.length} SQUADS ACTIVE
+                </span>
+              </div>
 
-        .scrollbar-thin::-webkit-scrollbar-track {
-          background: rgba(30, 30, 46, 0.3);
-          border-radius: 3px;
-        }
+              {/* Search Teams */}
+              <div className="relative mb-3">
+                <input
+                  type="text"
+                  value={teamSearchQuery}
+                  onChange={(e) => setTeamSearchQuery(e.target.value)}
+                  placeholder="Search squad name..."
+                  className="w-full px-3.5 py-2 pl-9 bg-black border border-zinc-800 rounded-xl text-white font-mono text-xs placeholder-zinc-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                />
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                {teamSearchQuery && (
+                  <button
+                    onClick={() => setTeamSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
 
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-          background: rgba(139, 92, 246, 0.5);
-          border-radius: 3px;
-        }
+              {/* Teams Roster List */}
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1 scrollbar-none">
+                {filteredTeams.length === 0 ? (
+                  <div className="text-center py-6 bg-black/60 rounded-xl border border-zinc-900">
+                    <p className="text-zinc-500 font-mono text-xs">
+                      No squads found matching &quot;{teamSearchQuery}&quot;
+                    </p>
+                  </div>
+                ) : (
+                  filteredTeams.map((team) => (
+                    <div
+                      key={team.id}
+                      onClick={() => handleTeamSelect(team.id)}
+                      className="group flex items-center justify-between p-3 rounded-xl bg-black/70 border border-zinc-800 hover:border-orange-500 hover:bg-zinc-900/90 transition-all duration-200 cursor-pointer active:scale-[0.99]"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-700 flex items-center justify-center text-xs font-mono font-bold text-white group-hover:border-orange-500 group-hover:text-orange-400">
+                          ⚡
+                        </div>
+                        <span className="font-mono text-xs sm:text-sm font-bold text-zinc-200 group-hover:text-white transition-colors">
+                          {team.teamName}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-black text-orange-400">
+                          {team.score} PTS
+                        </span>
+                        <span className="text-xs text-zinc-500 group-hover:text-orange-400 group-hover:translate-x-0.5 transition-all">
+                          →
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
 
-        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-          background: rgba(139, 92, 246, 0.7);
-        }
+            {/* Leaderboard Section in Lobby */}
+            <div className="bg-zinc-950/80 border border-zinc-800 rounded-2xl p-4">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-zinc-800/80">
+                <h3 className="font-mono font-black text-xs tracking-wider text-zinc-400 uppercase">
+                  🏆 TOURNAMENT RANKINGS
+                </h3>
+                <span className="text-[10px] font-mono text-zinc-500">LIVE</span>
+              </div>
+              <Leaderboard teams={teams} selectedTeamId={selectedTeamId} />
+            </div>
+          </div>
+        ) : (
+          /* ============================================================== */
+          /* PHASE 2: HUNTER COCKPIT HUD (When team is selected)           */
+          /* ============================================================== */
+          <div className="flex flex-col gap-3.5 animate-slideUp">
+            {/* Squad Status & Mission Bar */}
+            <div className="bg-black/90 border border-orange-500/40 rounded-2xl p-3.5 shadow-lg shadow-orange-500/5">
+              <div className="flex items-center justify-between">
+                {/* Left: Squad & Score */}
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-orange-500/20 border border-orange-500/50 flex items-center justify-center font-mono font-bold text-sm text-orange-400">
+                    ⚡
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-white font-mono font-black text-sm tracking-wide truncate max-w-[130px] sm:max-w-[180px]">
+                        {selectedTeam.teamName}
+                      </h2>
+                      <button
+                        onClick={handleChangeTeam}
+                        className="text-[10px] font-mono text-zinc-400 hover:text-orange-400 transition-colors uppercase px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800"
+                      >
+                        ⇄ SWITCH
+                      </button>
+                    </div>
+                    <p className="text-[11px] font-mono font-black text-orange-400">
+                      {selectedTeam.score} <span className="text-zinc-500 font-normal">POINTS</span>
+                    </p>
+                  </div>
+                </div>
 
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
+                {/* Right: Uncaught Targets Badge */}
+                <button
+                  onClick={() => setShowUncaughtModal(true)}
+                  className="flex flex-col items-end px-3 py-1.5 rounded-xl bg-zinc-900/90 border border-orange-500/40 hover:border-orange-400 hover:bg-orange-500/10 transition-all group"
+                >
+                  <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-wider group-hover:text-orange-400">
+                    CODEX
+                  </span>
+                  <div className="flex items-center gap-1 font-mono font-black text-xs text-white">
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse-fast"></span>
+                    <span>
+                      {typeof uncaughtCount === "number" ? uncaughtCount : "--"} LEFT
+                    </span>
+                  </div>
+                </button>
+              </div>
+            </div>
 
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
+            {/* Central Hero Scanner Arena */}
+            <div className="relative bg-black/85 border border-zinc-800/90 rounded-3xl p-4 flex flex-col items-center justify-center overflow-hidden shadow-2xl">
+              {/* Subtle anime corner accents */}
+              <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-orange-500"></div>
+              <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-orange-500"></div>
+              <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-orange-500"></div>
+              <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-orange-500"></div>
 
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-purple-950/20 to-slate-950 flex items-center justify-center p-4">
-        <div className="w-full max-w-md flex flex-col gap-6 animate-fadeIn">
-          {/* Header */}
-          <Header />
+              <Pokeball
+                onClick={handlePokeballClick}
+                isExploding={isPokeballExploding}
+              />
+            </div>
 
-          {/* Main Game Card */}
-          <main className="bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-sm border border-purple-500/20 rounded-3xl p-6 shadow-2xl shadow-purple-500/20">
-            {/* Title & Change Team */}
-            <div className="flex items-center justify-between mb-6">
-              <h1
-                className={`flex-1 ${
-                  selectedTeam ? "text-left" : "text-center"
-                } text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 tracking-tight`}
-              >
-                {selectedTeam ? "Hunt is On!!" : "Let's start hunting"}
-              </h1>
-              {selectedTeam && (
+            {/* Bottom Segmented Switcher (Team Collection vs Leaderboard) */}
+            <div className="flex flex-col gap-2.5">
+              <div className="grid grid-cols-2 p-1 bg-black/90 border border-zinc-800 rounded-xl">
                 <button
                   type="button"
-                  onClick={handleChangeTeam}
-                  className="ml-4 whitespace-nowrap rounded-lg bg-slate-800/70 border border-purple-500/40 px-4 py-2 text-sm font-medium text-purple-200 hover:border-purple-400 hover:text-purple-100 transition-colors"
+                  onClick={() => setActiveBottomTab("collection")}
+                  className={`py-2 rounded-lg font-mono text-xs font-black tracking-wider uppercase transition-all duration-200 flex items-center justify-center gap-1.5 ${
+                    activeBottomTab === "collection"
+                      ? "bg-orange-500 text-black shadow-md shadow-orange-500/30"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
                 >
-                  Change Team
+                  <span>🎴 SQUAD CARDS</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                      activeBottomTab === "collection"
+                        ? "bg-black text-orange-400"
+                        : "bg-zinc-800 text-zinc-300"
+                    }`}
+                  >
+                    {charactersCaught.length}
+                  </span>
                 </button>
-              )}
-            </div>
 
-            {/* Pokeball Icon */}
-            <Pokeball
-              onClick={handlePokeballClick}
-              isExploding={isPokeballExploding}
-            />
+                <button
+                  type="button"
+                  onClick={() => setActiveBottomTab("leaderboard")}
+                  className={`py-2 rounded-lg font-mono text-xs font-black tracking-wider uppercase transition-all duration-200 flex items-center justify-center gap-1.5 ${
+                    activeBottomTab === "leaderboard"
+                      ? "bg-orange-500 text-black shadow-md shadow-orange-500/30"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  <span>🏆 RANKINGS</span>
+                </button>
+              </div>
 
-            {/* Characters Left */}
-            <div
-              onClick={() => setShowUncaughtModal(true)}
-              className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 border border-purple-500/30 rounded-xl p-3 mb-6 text-center cursor-pointer hover:border-purple-500/50 hover:scale-[1.02] transition-all duration-300 group"
-            >
-              <p className="text-purple-300 text-sm font-medium group-hover:text-purple-200 transition-colors">
-                Show character left to hunt
-              </p>
-              <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400 mt-1 group-hover:scale-105 transition-transform">
-                {isLoadingUncaughtCount
-                  ? "..."
-                  : typeof uncaughtCount === "number"
-                  ? uncaughtCount
-                  : "--"}
-              </p>
-            </div>
-
-            {/* Select Your Team - Only shown when no team is selected */}
-            {!selectedTeam && (
-              <div className="mb-6">
-                <h2 className="text-purple-300 text-center font-semibold mb-4 tracking-wide">
-                  Select Your Team
-                </h2>
-                <div className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border border-purple-500/30 rounded-2xl p-4">
-                  {/* Search Input */}
-                  <div className="mb-4">
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={teamSearchQuery}
-                        onChange={(e) => setTeamSearchQuery(e.target.value)}
-                        placeholder="Search teams..."
-                        className="w-full px-4 py-2.5 pl-10 bg-slate-800/70 border border-purple-500/40 rounded-xl text-purple-100 placeholder-purple-300/50 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 transition-all"
-                      />
-                      <svg
-                        className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/50"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        />
-                      </svg>
-                      {teamSearchQuery && (
-                        <button
-                          onClick={() => setTeamSearchQuery("")}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300/50 hover:text-purple-300 transition-colors"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Teams List */}
-                  <div className="space-y-2 max-h-64 overflow-y-auto pr-2 scrollbar-thin">
-                    {filteredTeams.length === 0 ? (
-                      <div className="text-center py-6">
-                        <p className="text-purple-300 text-sm">
-                          No teams found matching &quot;{teamSearchQuery}&quot;
+              {/* Dynamic Bottom Viewport */}
+              <div className="bg-zinc-950/90 border border-zinc-800 rounded-2xl p-3.5 min-h-[200px]">
+                {activeBottomTab === "collection" ? (
+                  /* TAB 1: SQUAD CAUGHT CARDS */
+                  <div>
+                    {isLoadingCaught ? (
+                      <div className="flex flex-col items-center justify-center py-10">
+                        <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+                        <p className="text-zinc-500 text-xs font-mono">Loading squad cards...</p>
+                      </div>
+                    ) : charactersCaught.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center text-center py-8 px-4">
+                        <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-xl mb-2 text-zinc-500">
+                          🎴
+                        </div>
+                        <p className="text-white text-xs font-mono font-bold">
+                          NO CARDS CAUGHT YET
+                        </p>
+                        <p className="text-zinc-500 text-[11px] font-mono mt-1 max-w-xs">
+                          Point the AR Scanner at character cards to catch them and score points for your squad!
                         </p>
                       </div>
                     ) : (
-                      filteredTeams.map((team) => (
-                        <div
-                          key={team.id}
-                          onClick={() => handleTeamSelect(team.id)}
-                          className="h-12 rounded-xl border-2 border-slate-700 bg-slate-800/30 hover:border-purple-500/50 hover:bg-slate-700/30 transition-all duration-300 cursor-pointer flex items-center px-4 group"
-                        >
-                          <span className="text-slate-300 text-sm font-medium group-hover:text-purple-300 transition-colors">
-                            {team.teamName}
-                          </span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Characters Caught by Selected Team - Only shown when team is selected */}
-            {selectedTeam && (
-              <div className="mb-6">
-                <h2 className="text-purple-300 text-center font-semibold mb-3 tracking-wide text-sm">
-                  Characters Caught by {selectedTeam.teamName}
-                </h2>
-                <div className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border border-purple-500/30 rounded-2xl p-4">
-                  {isLoadingCaught ? (
-                    <div className="flex items-center justify-center py-6">
-                      <div className="text-center">
-                        <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                        <p className="text-purple-300 text-sm">
-                          Loading caught characters...
-                        </p>
-                      </div>
-                    </div>
-                  ) : charactersCaught.length === 0 ? (
-                    <div className="text-center py-6">
-                      <p className="text-purple-300 text-sm font-medium">
-                        No characters caught yet.
-                      </p>
-                      <p className="text-slate-400 text-xs mt-1">
-                        Start hunting to collect your first character!
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3 overflow-x-auto pb-2">
-                      <button
-                        className="flex-shrink-0 w-8 h-16 flex items-center justify-center text-purple-400 hover:text-purple-300 transition-colors"
-                        onClick={() => {
-                          const container = document.getElementById(
-                            "characters-container"
-                          );
-                          if (container) container.scrollLeft -= 120;
-                        }}
-                      >
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 19l-7-7 7-7"
-                          />
-                        </svg>
-                      </button>
-
-                      <div
-                        id="characters-container"
-                        className="flex gap-3 overflow-x-auto flex-1 scrollbar-hide scroll-smooth"
-                      >
+                      <div className="flex gap-2.5 overflow-x-auto pb-2 pt-1 scrollbar-none scroll-smooth">
                         {charactersCaught.map((character) => {
                           const imageSrc = getImageSrc(character.image);
-                          const displayAsText = shouldDisplayAsText(
-                            character.image
-                          );
+                          const displayAsText = shouldDisplayAsText(character.image);
 
                           return (
                             <div
                               key={character.id}
-                              className="flex-shrink-0 w-24 bg-gradient-to-br from-slate-700/50 to-slate-800/50 border-2 border-purple-500/40 rounded-xl flex flex-col hover:border-purple-400 transition-all duration-300 hover:scale-105 cursor-pointer"
+                              className="flex-shrink-0 w-28 bg-black rounded-xl border-2 border-orange-500/50 p-2 flex flex-col items-center relative overflow-hidden transition-all duration-300 hover:scale-105 hover:border-orange-400 shadow-md shadow-orange-500/10"
                             >
-                              {/* Image/Emoji Container - Fixed height */}
-                              <div className="h-20 w-full overflow-hidden rounded-t-xl">
+                              {/* Rarity Tag */}
+                              <span className="absolute top-1 right-1 text-[8px] font-mono font-black bg-orange-500 text-black px-1.5 py-0.2 rounded">
+                                {character.tier === "Legendary" ? "SSR" : character.tier === "Rare" ? "SR" : "R"}
+                              </span>
+
+                              {/* Card Image */}
+                              <div className="w-20 h-24 my-1 rounded-lg overflow-hidden bg-zinc-900 flex items-center justify-center border border-zinc-800">
                                 {imageSrc ? (
                                   // eslint-disable-next-line @next/next/no-img-element
                                   <img
                                     src={imageSrc}
                                     alt={character.name}
                                     className="w-full h-full object-cover"
-                                    draggable={false}
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = "none";
-                                    }}
                                   />
+                                ) : displayAsText ? (
+                                  <span className="text-3xl">{character.image?.trim()}</span>
                                 ) : (
-                                  <div className="w-full h-full flex items-center justify-center">
-                                    {displayAsText ? (
-                                      <div className="text-3xl">
-                                        {character.image?.trim()}
-                                      </div>
-                                    ) : (
-                                      <div className="text-3xl">❓</div>
-                                    )}
-                                  </div>
+                                  <span className="text-2xl text-zinc-600 font-mono">?</span>
                                 )}
                               </div>
-                              {/* Name Container - Fixed height */}
-                              <div className="h-8 flex items-center justify-center px-2 py-1 bg-slate-900/50 rounded-b-xl border-t border-purple-500/20">
-                                <div className="text-xs text-purple-200 font-medium text-center line-clamp-2 w-full">
+
+                              {/* Card Info */}
+                              <div className="w-full text-center mt-1">
+                                <h4 className="text-white text-[11px] font-mono font-bold truncate">
                                   {character.name}
-                                </div>
+                                </h4>
+                                <p className="text-orange-400 text-[10px] font-mono font-black">
+                                  +{character.value} PTS
+                                </p>
                               </div>
                             </div>
                           );
                         })}
                       </div>
-
-                      <button
-                        className="flex-shrink-0 w-8 h-16 flex items-center justify-center text-purple-400 hover:text-purple-300 transition-colors"
-                        onClick={() => {
-                          const container = document.getElementById(
-                            "characters-container"
-                          );
-                          if (container) container.scrollLeft += 120;
-                        }}
-                      >
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                ) : (
+                  /* TAB 2: TOURNAMENT LEADERBOARD */
+                  <div>
+                    <Leaderboard teams={teams} selectedTeamId={selectedTeamId} />
+                  </div>
+                )}
               </div>
-            )}
-
-            {/* Leaderboard */}
-            <Leaderboard teams={teams} selectedTeamId={selectedTeamId} />
-          </main>
-        </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* AR Camera Overlay */}
@@ -480,6 +451,6 @@ export default function Home() {
         onClose={() => setShowUncaughtModal(false)}
         onCountChange={handleUncaughtCountChange}
       />
-    </>
+    </div>
   );
 }

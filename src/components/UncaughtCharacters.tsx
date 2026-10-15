@@ -29,7 +29,7 @@ export default function UncaughtCharacters({
       onCountChange?.(cards.length);
     } catch (err) {
       console.error("Error fetching uncaught cards:", err);
-      setError("Failed to load uncaught characters");
+      setError("Failed to load uncaught targets");
     } finally {
       setLoading(false);
     }
@@ -41,29 +41,26 @@ export default function UncaughtCharacters({
     }
   }, [isOpen, fetchUncaughtCards]);
 
-  const getTierColor = (tier?: string) => {
+  const getTierBadge = (tier?: string) => {
     switch (tier) {
       case "Legendary":
-        return "from-amber-400 to-orange-500";
+        return {
+          label: "SSR",
+          style: "bg-orange-500 text-black font-black border-orange-400",
+          border: "border-orange-500 shadow-orange-500/20",
+        };
       case "Rare":
-        return "from-purple-400 to-pink-500";
-      case "Common":
-        return "from-slate-400 to-slate-500";
+        return {
+          label: "SR",
+          style: "bg-white text-black font-bold border-zinc-200",
+          border: "border-zinc-400 shadow-white/10",
+        };
       default:
-        return "from-slate-400 to-slate-500";
-    }
-  };
-
-  const getTierBorder = (tier?: string) => {
-    switch (tier) {
-      case "Legendary":
-        return "border-amber-400 shadow-amber-500/30";
-      case "Rare":
-        return "border-purple-400 shadow-purple-500/30";
-      case "Common":
-        return "border-slate-400 shadow-slate-500/30";
-      default:
-        return "border-slate-400 shadow-slate-500/30";
+        return {
+          label: "R",
+          style: "bg-zinc-800 text-zinc-300 font-medium border-zinc-700",
+          border: "border-zinc-800",
+        };
     }
   };
 
@@ -71,127 +68,91 @@ export default function UncaughtCharacters({
 
   return (
     <div
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center px-4 py-8 md:py-12 animate-fadeIn z-50"
+      className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fadeIn select-none"
       onClick={onClose}
     >
       <div
-        className="bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-md border-2 border-purple-500/50 rounded-3xl w-full max-w-2xl sm:p-6 p-4 shadow-2xl shadow-purple-500/30 animate-scaleIn max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-zinc-950 border-2 border-orange-500/40 rounded-3xl w-full max-w-lg p-5 shadow-2xl shadow-orange-500/10 animate-scaleIn max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-            Characters Left to Hunt
-          </h2>
+        <div className="flex justify-between items-center pb-4 border-b border-zinc-800">
+          <div>
+            <h2 className="text-white font-mono font-black text-lg sm:text-xl tracking-wider flex items-center gap-2">
+              <span className="text-orange-500">CODEX //</span>
+              <span>UNCAUGHT</span>
+            </h2>
+            <p className="text-zinc-400 text-xs font-mono mt-0.5">
+              {uncaughtCards.length} targets currently active in the field
+            </p>
+          </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full bg-red-500/20 border-2 border-red-400 flex items-center justify-center text-red-400 hover:bg-red-500/30 transition-all"
+            className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white hover:border-orange-500 transition-colors"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            ✕
           </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin">
+        {/* Content list */}
+        <div className="flex-1 overflow-y-auto py-4 space-y-3 pr-1 scrollbar-none">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-purple-300">Loading characters...</p>
-              </div>
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+              <p className="text-zinc-400 text-xs font-mono">Syncing field radar...</p>
             </div>
           ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-red-400 mb-4">{error}</p>
-              <button
-                onClick={fetchUncaughtCards}
-                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-colors"
-              >
-                Try Again
-              </button>
+            <div className="text-center py-8">
+              <p className="text-red-400 text-sm font-mono">{error}</p>
             </div>
           ) : uncaughtCards.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">🎉</div>
-              <p className="text-purple-300 text-lg font-semibold">
-                All characters have been caught!
-              </p>
-              <p className="text-slate-400 text-sm mt-2">
-                Amazing work, hunters!
-              </p>
+            <div className="text-center py-12 bg-zinc-900/50 rounded-2xl border border-zinc-800">
+              <p className="text-orange-400 font-mono font-bold text-base">ALL TARGETS CAPTURED!</p>
+              <p className="text-zinc-400 text-xs font-mono mt-1">Every character has been successfully caught.</p>
             </div>
           ) : (
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
               {uncaughtCards.map((card) => {
+                const tierInfo = getTierBadge(card.tier);
                 const imageSrc = getImageSrc(card.image);
                 const displayAsText = shouldDisplayAsText(card.image);
 
                 return (
                   <div
                     key={card.id}
-                    className={`flex-shrink-0 w-40 sm:w-48 bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-2 ${getTierBorder(
-                      card.tier
-                    )} rounded-2xl p-4 hover:scale-105 transition-all duration-300 cursor-pointer shadow-lg`}
+                    className={`bg-zinc-900/80 rounded-xl border ${tierInfo.border} p-2 flex flex-col items-center relative overflow-hidden transition-all duration-200 hover:scale-[1.02]`}
                   >
-                    <div className="flex flex-col items-center text-center">
-                      {/* Character Image/Emoji */}
-                      <div className="w-20 h-20 bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl flex items-center justify-center mb-3 border border-purple-500/30 overflow-hidden">
-                        {imageSrc ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={imageSrc}
-                            alt={card.name}
-                            className="w-full h-full object-cover"
-                            draggable={false}
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                              const parent = e.currentTarget.parentElement;
-                              if (parent) {
-                                parent.innerHTML = displayAsText
-                                  ? `<span class="text-4xl">${card.image?.trim()}</span>`
-                                  : '<span class="text-4xl">❓</span>';
-                              }
-                            }}
-                          />
-                        ) : displayAsText ? (
-                          <span className="text-4xl">{card.image?.trim()}</span>
-                        ) : (
-                          <span className="text-4xl">❓</span>
-                        )}
-                      </div>
+                    {/* Rarity Pill */}
+                    <span
+                      className={`absolute top-1.5 left-1.5 text-[9px] px-1.5 py-0.2 rounded border font-mono ${tierInfo.style}`}
+                    >
+                      {tierInfo.label}
+                    </span>
 
-                      {/* Character Name */}
-                      <h3 className="text-sm font-semibold text-purple-300 mb-2 truncate w-full">
-                        {card.name}
-                      </h3>
-
-                      {/* Tier Badge */}
-                      {card.tier && (
-                        <div
-                          className={`px-3 py-1 rounded-full bg-gradient-to-r ${getTierColor(
-                            card.tier
-                          )} text-white text-xs font-bold mb-2`}
-                        >
-                          {card.tier}
-                        </div>
+                    {/* Image / Icon */}
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 my-1 rounded-lg overflow-hidden bg-black/60 flex items-center justify-center border border-zinc-800">
+                      {imageSrc ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={imageSrc}
+                          alt={card.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : displayAsText ? (
+                        <span className="text-2xl">{card.image?.trim()}</span>
+                      ) : (
+                        <span className="text-xl text-zinc-600 font-mono">?</span>
                       )}
+                    </div>
 
-                      {/* Value */}
-                      <div className="text-amber-400 font-bold text-sm">
-                        {card.value} pts
-                      </div>
+                    {/* Card Info */}
+                    <div className="w-full text-center mt-1">
+                      <h4 className="text-white text-xs font-mono font-bold truncate">
+                        {card.name}
+                      </h4>
+                      <p className="text-orange-400 text-[11px] font-mono font-black">
+                        +{card.value} PTS
+                      </p>
                     </div>
                   </div>
                 );
@@ -201,17 +162,11 @@ export default function UncaughtCharacters({
         </div>
 
         {/* Footer */}
-        {!loading && !error && uncaughtCards.length > 0 && (
-          <div className="mt-6 pt-4 border-t border-purple-500/30">
-            <p className="text-center text-purple-300 text-sm">
-              <span className="font-bold text-amber-400">
-                {uncaughtCards.length}
-              </span>{" "}
-              character{uncaughtCards.length !== 1 ? "s" : ""} waiting to be
-              discovered
-            </p>
-          </div>
-        )}
+        <div className="pt-3 border-t border-zinc-800 text-center">
+          <p className="text-[11px] font-mono text-zinc-500">
+            Find and scan these cards with your AR Camera to score points
+          </p>
+        </div>
       </div>
     </div>
   );

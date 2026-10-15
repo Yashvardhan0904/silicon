@@ -38,72 +38,83 @@ export default function Leaderboard({
   };
 
   return (
-    <div>
-      <h2 className="text-purple-300 text-center font-semibold mb-4 tracking-wide">
-        Leaderboard
-      </h2>
+    <div className="w-full">
       <div
         ref={leaderboardRef}
-        className="space-y-3 max-h-80 overflow-y-auto pr-2 scrollbar-thin"
+        className="space-y-2 max-h-72 sm:max-h-80 overflow-y-auto pr-1 scrollbar-none"
       >
         {teams.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-slate-400 text-sm">No teams registered yet</p>
+          <div className="text-center py-8 bg-zinc-950/50 border border-zinc-900 rounded-2xl">
+            <p className="text-zinc-500 text-sm font-mono">No teams registered yet</p>
           </div>
         ) : (
-          teams.map((team, index) => (
-            <div
-              key={team.id}
-              ref={team.id === selectedTeamId ? selectedTeamRef : null}
-              onClick={() => handleTeamClick(team.id)}
-              className={`bg-gradient-to-r from-slate-800/50 to-slate-700/50 border rounded-xl p-4 transition-all duration-300 ${
-                isSelectable
-                  ? "cursor-pointer hover:border-purple-500/50 hover:scale-[1.01]"
-                  : ""
-              } ${
-                team.id === selectedTeamId
-                  ? "border-purple-500 shadow-lg shadow-purple-500/30 scale-[1.02]"
-                  : "border-purple-500/30"
-              }`}
-            >
-              <div className="flex items-center gap-4">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 ${
-                    index === 0
-                      ? "bg-gradient-to-br from-amber-400 to-orange-500 text-slate-900"
-                      : index === 1
-                      ? "bg-gradient-to-br from-slate-400 to-slate-500 text-slate-900"
-                      : index === 2
-                      ? "bg-gradient-to-br from-amber-600 to-amber-700 text-slate-900"
-                      : "bg-gradient-to-br from-purple-600 to-purple-700 text-white"
-                  }`}
-                >
-                  #{index + 1}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center mb-1">
-                    <h3
-                      className={`font-semibold text-sm truncate ${
-                        team.id === selectedTeamId
-                          ? "text-purple-300"
-                          : "text-slate-300"
-                      }`}
-                    >
-                      {team.teamName}
-                    </h3>
-                    <span className="text-amber-400 font-bold text-sm ml-2 flex-shrink-0">
-                      {team.score}
-                    </span>
+          teams.map((team, index) => {
+            const isSelected = team.id === selectedTeamId;
+            return (
+              <div
+                key={team.id}
+                ref={isSelected ? selectedTeamRef : null}
+                onClick={() => handleTeamClick(team.id)}
+                className={`relative rounded-xl p-3 sm:p-3.5 transition-all duration-300 border ${
+                  isSelectable
+                    ? "cursor-pointer hover:border-orange-500/60 hover:bg-zinc-900"
+                    : ""
+                } ${
+                  isSelected
+                    ? "bg-zinc-900/90 border-orange-500 shadow-lg shadow-orange-500/20 scale-[1.01]"
+                    : "bg-black/70 border-zinc-800/80 hover:border-zinc-700"
+                }`}
+              >
+                {/* Active indicator dot */}
+                {isSelected && (
+                  <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-6 bg-orange-500 rounded-r"></div>
+                )}
+
+                <div className="flex items-center gap-3">
+                  {/* Rank Badge */}
+                  <div
+                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center font-mono font-black text-xs sm:text-sm flex-shrink-0 ${
+                      index === 0
+                        ? "bg-orange-500 text-black shadow-md shadow-orange-500/40"
+                        : index === 1
+                        ? "bg-white text-black shadow-md shadow-white/20"
+                        : index === 2
+                        ? "bg-zinc-700 text-orange-300 border border-orange-500/30"
+                        : "bg-zinc-900 text-zinc-400 border border-zinc-800"
+                    }`}
+                  >
+                    #{index + 1}
                   </div>
-                  {team.id === selectedTeamId && (
-                    <div className="text-xs text-purple-400 font-medium">
-                      Your Team
+
+                  {/* Team Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center">
+                      <h3
+                        className={`font-mono text-sm truncate font-bold ${
+                          isSelected ? "text-orange-400" : "text-white"
+                        }`}
+                      >
+                        {team.teamName}
+                      </h3>
+                      <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                        <span className="text-orange-500 text-xs font-bold font-mono">⚡</span>
+                        <span className="text-white font-mono font-black text-sm">
+                          {team.score}
+                        </span>
+                        <span className="text-[10px] text-zinc-500 font-mono">PTS</span>
+                      </div>
                     </div>
-                  )}
+
+                    {isSelected && (
+                      <div className="text-[10px] font-mono text-orange-400 font-semibold tracking-wider mt-0.5">
+                        YOUR SQUAD
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
