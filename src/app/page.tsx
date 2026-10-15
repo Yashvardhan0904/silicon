@@ -247,7 +247,7 @@ export default function Home() {
             <div className="bg-zinc-950/80 border border-zinc-800 rounded-2xl p-4">
               <div className="flex items-center justify-between mb-3 pb-2 border-b border-zinc-800/80">
                 <h3 className="font-mono font-black text-xs tracking-wider text-zinc-400 uppercase">
-                  🏆 TOURNAMENT RANKINGS
+                   TOURNAMENT RANKINGS
                 </h3>
                 <span className="text-[10px] font-mono text-zinc-500">LIVE</span>
               </div>
@@ -329,7 +329,7 @@ export default function Home() {
                       : "text-zinc-400 hover:text-white"
                   }`}
                 >
-                  <span>🎴 SQUAD CARDS</span>
+                  <span> SQUAD CARDS</span>
                   <span
                     className={`text-[10px] px-1.5 py-0.2 rounded-full ${
                       activeBottomTab === "collection"
@@ -350,7 +350,7 @@ export default function Home() {
                       : "text-zinc-400 hover:text-white"
                   }`}
                 >
-                  <span>🏆 RANKINGS</span>
+                  <span>RANKINGS</span>
                 </button>
               </div>
 

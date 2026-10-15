@@ -3192,7 +3192,7 @@ function Home() {
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
                                                 className: "font-mono font-black text-xs tracking-wider text-zinc-400 uppercase",
-                                                children: "🏆 TOURNAMENT RANKINGS"
+                                                children: "TOURNAMENT RANKINGS"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/page.tsx",
                                                 lineNumber: 249,
@@ -3421,7 +3421,7 @@ function Home() {
                                                 className: `py-2 rounded-lg font-mono text-xs font-black tracking-wider uppercase transition-all duration-200 flex items-center justify-center gap-1.5 ${activeBottomTab === "collection" ? "bg-orange-500 text-black shadow-md shadow-orange-500/30" : "text-zinc-400 hover:text-white"}`,
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                        children: "🎴 SQUAD CARDS"
+                                                        children: " SQUAD CARDS"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/page.tsx",
                                                         lineNumber: 332,
@@ -3446,7 +3446,7 @@ function Home() {
                                                 onClick: ()=>setActiveBottomTab("leaderboard"),
                                                 className: `py-2 rounded-lg font-mono text-xs font-black tracking-wider uppercase transition-all duration-200 flex items-center justify-center gap-1.5 ${activeBottomTab === "leaderboard" ? "bg-orange-500 text-black shadow-md shadow-orange-500/30" : "text-zinc-400 hover:text-white"}`,
                                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                    children: "🏆 RANKINGS"
+                                                    children: "RANKINGS"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/page.tsx",
                                                     lineNumber: 353,
