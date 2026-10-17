@@ -14,6 +14,8 @@ interface CardFormProps {
     mindFile: string;
     modelUrl: string;
     targetIndex?: number | null;
+    tier?: string;
+    value?: number;
     isCaught?: boolean;
     caughtByTeam?: string;
   };

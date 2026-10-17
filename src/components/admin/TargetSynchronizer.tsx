@@ -198,6 +198,7 @@ export const TargetSynchronizer = ({
 
                 {/* Target Preview Image */}
                 <div className="relative aspect-[3/4] bg-black/60 flex items-center justify-center p-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={target.previewUrl}
                     alt={`Target ${target.targetIndex}`}

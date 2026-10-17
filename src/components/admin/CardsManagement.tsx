@@ -11,6 +11,8 @@ interface Card {
   mindFile: string;
   modelUrl: string;
   targetIndex?: number | null;
+  tier?: "Common" | "Rare" | "Legendary" | string;
+  value?: number;
   isCaught: boolean;
   caughtByTeam: string;
 }
@@ -45,13 +47,13 @@ export const CardsManagement = ({
     let tierColor = "bg-purple-600";
     let tierName = "Common";
 
-    if (cardId.startsWith("c1")) {
+    if (card.tier === "Legendary" || cardId.startsWith("c1")) {
       tierColor = "bg-yellow-600";
       tierName = "Legendary";
-    } else if (cardId.startsWith("c2")) {
+    } else if (card.tier === "Rare" || cardId.startsWith("c2")) {
       tierColor = "bg-blue-600";
       tierName = "Rare";
-    } else if (cardId.startsWith("c3")) {
+    } else if (card.tier === "Common" || cardId.startsWith("c3")) {
       tierColor = "bg-purple-600";
       tierName = "Common";
     }

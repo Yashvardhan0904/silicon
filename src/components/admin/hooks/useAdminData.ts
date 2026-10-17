@@ -25,6 +25,8 @@ interface Card {
   mindFile: string;
   modelUrl: string;
   targetIndex?: number | null;
+  tier?: "Common" | "Rare" | "Legendary" | string;
+  value?: number;
   isCaught: boolean;
   caughtByTeam: string;
 }
@@ -68,6 +70,8 @@ export const useAdminData = () => {
           mindFile: c.mindFile || "",
           modelUrl: c.modelUrl || "",
           targetIndex: c.targetIndex ?? null,
+          tier: c.tier,
+          value: c.value,
           isCaught: c.isCaught,
           caughtByTeam: c.caughtByTeam || "",
         }))

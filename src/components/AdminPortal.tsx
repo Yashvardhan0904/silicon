@@ -34,6 +34,8 @@ interface Card {
   mindFile: string;
   modelUrl: string;
   targetIndex?: number | null;
+  tier?: "Common" | "Rare" | "Legendary" | string;
+  value?: number;
   isCaught: boolean;
   caughtByTeam: string;
 }
