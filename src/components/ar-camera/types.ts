@@ -9,6 +9,7 @@ export interface Character {
   options: string[];
   correctAnswer: number;
   value: number;
+  targetIndex?: number | null;
   isCaught: boolean;
   caughtByTeam: string;
   modelUrl?: string;

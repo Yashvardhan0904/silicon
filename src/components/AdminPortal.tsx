@@ -33,6 +33,7 @@ interface Card {
   image: string;
   mindFile: string;
   modelUrl: string;
+  targetIndex?: number | null;
   isCaught: boolean;
   caughtByTeam: string;
 }

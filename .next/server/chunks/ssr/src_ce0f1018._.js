@@ -492,9 +492,16 @@ const useARCharacters = ()=>{
                     grouped[tier].push(char);
                 }
             });
-            // Sort each tier by ID to ensure correct target mapping
+            // Sort each tier by targetIndex if available, falling back to ID
             Object.keys(grouped).forEach((tier)=>{
-                grouped[tier].sort((a, b)=>a.id.localeCompare(b.id));
+                grouped[tier].sort((a, b)=>{
+                    const aIndex = typeof a.targetIndex === "number" ? a.targetIndex : Infinity;
+                    const bIndex = typeof b.targetIndex === "number" ? b.targetIndex : Infinity;
+                    if (aIndex !== bIndex) {
+                        return aIndex - bIndex;
+                    }
+                    return a.id.localeCompare(b.id);
+                });
             });
             setCharactersByTier(grouped);
         } catch (err) {
@@ -1547,9 +1554,8 @@ registerTargetRef, selectedTier })=>{
         light: "type: directional; intensity: 0.8",
         position: "0 1 0"
     }), // Render a target entity for each character in the selected tier
-    characters.length > 0 && characters.map((character, index)=>{
-        const idIndex = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ar$2d$camera$2f$types$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getTargetIndexFromId"])(character.id);
-        const targetIndex = idIndex >= 0 ? idIndex : index;
+    characters.length > 0 && characters.filter((character)=>typeof character.targetIndex === "number" && character.targetIndex >= 0).map((character)=>{
+        const targetIndex = character.targetIndex;
         return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createElement"])("a-entity", {
             key: character.id,
             ref: registerTargetRef(character.id, targetIndex),

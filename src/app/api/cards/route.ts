@@ -86,19 +86,36 @@ export async function POST(request: Request) {
 
     const newCardId = await generateNextId('cards', prefix);
     const calculatedTier = getTierFromValue(numericValue);
+    const assignedTier = body.tier || calculatedTier;
+
+    let targetIndex =
+      body.targetIndex !== undefined && body.targetIndex !== null
+        ? Number(body.targetIndex)
+        : undefined;
+
+    if (targetIndex === undefined) {
+      const maxCard = await prisma.card.findFirst({
+        where: { tier: assignedTier },
+        orderBy: { targetIndex: 'desc' },
+        select: { targetIndex: true },
+      });
+      targetIndex =
+        typeof maxCard?.targetIndex === 'number' ? maxCard.targetIndex + 1 : 0;
+    }
 
     const newCard = await prisma.card.create({
       data: {
         id: newCardId,
         name: name.trim(),
         value: numericValue,
-        tier: body.tier || calculatedTier,
+        tier: assignedTier,
         image: image || '',
         question: question.trim(),
         options: options.map((opt: string) => opt.trim()),
         correctAnswer: Number(correctAnswer) || 0,
         mindFile: mindFile || '',
         modelUrl: modelUrl || '',
+        targetIndex,
         isCaught: false,
         caughtByTeam: '',
       },

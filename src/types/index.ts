@@ -16,6 +16,7 @@ export interface Card {
   correctAnswer?: number;
   mindFile?: string;
   modelUrl?: string;
+  targetIndex?: number | null;
   isCaught: boolean;
   caughtByTeam: string | null; // Team ID that caught this card
 }
@@ -29,6 +30,7 @@ export interface Character {
   options: string[];
   correctAnswer: number;
   value: number; // Points awarded for catching
+  targetIndex?: number | null; // MindAR targetIndex in tier .mind file
   isCaught: boolean;
   caughtByTeam: string; // Empty string if not caught, team ID if caught
   mindFile: string; // Just filename (e.g., "mewtwo.mind")

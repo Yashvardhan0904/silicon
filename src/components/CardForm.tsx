@@ -13,6 +13,7 @@ interface CardFormProps {
     image: string;
     mindFile: string;
     modelUrl: string;
+    targetIndex?: number | null;
     isCaught?: boolean;
     caughtByTeam?: string;
   };
@@ -23,7 +24,17 @@ export default function CardForm({
   onClose,
   cardToEdit,
 }: CardFormProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    question: string;
+    options: string[];
+    correctAnswer: number;
+    image: string;
+    mindFile: string;
+    modelUrl: string;
+    value: number;
+    targetIndex?: number | null;
+  }>({
     name: "",
     question: "",
     options: ["", "", "", ""],
@@ -32,6 +43,7 @@ export default function CardForm({
     mindFile: "",
     modelUrl: "",
     value: 50,
+    targetIndex: null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -46,6 +58,10 @@ export default function CardForm({
         image: cardToEdit.image,
         mindFile: cardToEdit.mindFile,
         modelUrl: cardToEdit.modelUrl,
+        targetIndex:
+          "targetIndex" in cardToEdit && typeof cardToEdit.targetIndex === "number"
+            ? cardToEdit.targetIndex
+            : null,
         value:
           "value" in cardToEdit && typeof cardToEdit.value === "number"
             ? cardToEdit.value
@@ -61,6 +77,7 @@ export default function CardForm({
         mindFile: "",
         modelUrl: "",
         value: 50,
+        targetIndex: null,
       });
     }
     setError("");
@@ -111,7 +128,7 @@ export default function CardForm({
     setError("");
 
     try {
-      if (cardToEdit) {
+      if (cardToEdit && cardToEdit.id) {
         // Update existing card
         await updateCard(cardToEdit.id, {
           ...formData,
@@ -140,7 +157,7 @@ export default function CardForm({
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
       <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold text-white mb-4">
-          {cardToEdit ? "Edit Card" : "Add New Card"}
+          {cardToEdit && cardToEdit.id ? "Edit Card" : "Add New Card"}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -176,13 +193,13 @@ export default function CardForm({
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md
                      text-white focus:outline-none focus:ring-2
                      focus:ring-blue-500 focus:border-transparent"
-              disabled={isSubmitting || !!cardToEdit}
+              disabled={isSubmitting || !!(cardToEdit && cardToEdit.id)}
             >
               <option value={50}>50 - Legendary (ID: c1xx)</option>
               <option value={20}>20 - Rare (ID: c2xx)</option>
               <option value={8}>8 - Common (ID: c3xx)</option>
             </select>
-            {cardToEdit && (
+            {cardToEdit && cardToEdit.id && (
               <p className="text-xs text-gray-400 mt-1">
                 Card tier cannot be changed after creation
               </p>
@@ -294,6 +311,36 @@ export default function CardForm({
                 placeholder="Enter model URL"
                 disabled={isSubmitting}
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                AR Target Index (0-based position in .mind file)
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={
+                  formData.targetIndex !== undefined &&
+                  formData.targetIndex !== null
+                    ? formData.targetIndex
+                    : ""
+                }
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    targetIndex:
+                      e.target.value === "" ? null : Number(e.target.value),
+                  })
+                }
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md
+                       text-white placeholder-gray-400 focus:outline-none focus:ring-2
+                       focus:ring-blue-500 focus:border-transparent font-mono"
+                placeholder="Auto-assigned sequentially (0, 1, 2...)"
+                disabled={isSubmitting}
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Leave empty on new card to automatically assign the next sequential index.
+              </p>
             </div>
           </div>
 

@@ -61,6 +61,10 @@ export async function PUT(request: Request, { params }: Params) {
         }),
         ...(body.mindFile !== undefined && { mindFile: body.mindFile }),
         ...(body.modelUrl !== undefined && { modelUrl: body.modelUrl }),
+        ...(body.targetIndex !== undefined && {
+          targetIndex:
+            body.targetIndex === null ? null : Number(body.targetIndex),
+        }),
         ...(body.isCaught !== undefined && { isCaught: Boolean(body.isCaught) }),
         ...(body.caughtByTeam !== undefined && {
           caughtByTeam: body.caughtByTeam,

@@ -24,6 +24,7 @@ interface Card {
   image: string;
   mindFile: string;
   modelUrl: string;
+  targetIndex?: number | null;
   isCaught: boolean;
   caughtByTeam: string;
 }
@@ -66,6 +67,7 @@ export const useAdminData = () => {
           image: c.image || "",
           mindFile: c.mindFile || "",
           modelUrl: c.modelUrl || "",
+          targetIndex: c.targetIndex ?? null,
           isCaught: c.isCaught,
           caughtByTeam: c.caughtByTeam || "",
         }))

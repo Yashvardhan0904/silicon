@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { TargetSynchronizer } from "./TargetSynchronizer";
 
 interface Card {
   id: string;
@@ -9,6 +10,7 @@ interface Card {
   image: string;
   mindFile: string;
   modelUrl: string;
+  targetIndex?: number | null;
   isCaught: boolean;
   caughtByTeam: string;
 }
@@ -18,6 +20,7 @@ interface CardsManagementProps {
   isLoading: boolean;
   deleteConfirm: string | null;
   onAddCard: () => void;
+  onAddCardWithTarget?: (tier: 'Common' | 'Rare' | 'Legendary', targetIndex: number) => void;
   onEditCard: (card: Card) => void;
   onDeleteCard: (cardId: string) => void;
   onCancelDelete: () => void;
@@ -28,11 +31,13 @@ export const CardsManagement = ({
   isLoading,
   deleteConfirm,
   onAddCard,
+  onAddCardWithTarget,
   onEditCard,
   onDeleteCard,
   onCancelDelete,
 }: CardsManagementProps) => {
-  const [compilingCardId, setCompilingCardId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"table" | "synchronizer">("table");
+  const [compilingTier, setCompilingTier] = useState<string | null>(null);
   const [compileStatus, setCompileStatus] = useState<string | null>(null);
 
   const getTierBadge = (card: Card) => {
@@ -44,7 +49,7 @@ export const CardsManagement = ({
       tierColor = "bg-yellow-600";
       tierName = "Legendary";
     } else if (cardId.startsWith("c2")) {
-      tierColor = "bg-gray-400";
+      tierColor = "bg-blue-600";
       tierName = "Rare";
     } else if (cardId.startsWith("c3")) {
       tierColor = "bg-purple-600";
@@ -53,24 +58,54 @@ export const CardsManagement = ({
 
     return (
       <span
-        className={`${tierColor} text-white text-xs px-2 py-1 rounded-full`}
+        className={`${tierColor} text-white text-xs px-2 py-1 rounded-full font-medium`}
       >
         {tierName}
       </span>
     );
   };
 
-  const handleCompileCard = async (card: Card) => {
-    if (!card.image) {
-      alert("This card does not have an image URL to compile!");
+  const handleCompileTier = async (selectedTier: "Legendary" | "Rare" | "Common") => {
+    const prefix =
+      selectedTier === "Legendary" ? "c1" : selectedTier === "Rare" ? "c2" : "c3";
+
+    const tierCards = cards
+      .filter((c) => c.tier === selectedTier || c.id.toLowerCase().startsWith(prefix))
+      .sort((a, b) => {
+        const aIndex = typeof a.targetIndex === "number" ? a.targetIndex : Infinity;
+        const bIndex = typeof b.targetIndex === "number" ? b.targetIndex : Infinity;
+        if (aIndex !== bIndex) {
+          return aIndex - bIndex;
+        }
+        return a.id.localeCompare(b.id);
+      });
+
+    if (tierCards.length === 0) {
+      alert(`No cards found in ${selectedTier} tier to compile.`);
       return;
     }
 
-    try {
-      setCompilingCardId(card.id);
-      setCompileStatus("Loading compiler...");
+    const missingImages = tierCards.filter((c) => !c.image?.trim());
+    if (missingImages.length > 0) {
+      alert(
+        `Cannot compile ${selectedTier} tier: ${missingImages.length} card(s) (${missingImages
+          .map((c) => c.name)
+          .join(", ")}) do not have image URLs!`
+      );
+      return;
+    }
 
-      // Ensure compiler script is loaded
+    const confirmCompile = window.confirm(
+      `Compile all ${tierCards.length} ${selectedTier} cards into ${selectedTier.toLowerCase()}.mind?\n\n` +
+        `This will compile targets in order (0 to ${tierCards.length - 1}) and synchronize their database target indices.`
+    );
+    if (!confirmCompile) return;
+
+    try {
+      setCompilingTier(selectedTier);
+      setCompileStatus(`Loading compiler library...`);
+
+      // Ensure MindAR compiler is loaded
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (!(window as any).MINDAR?.IMAGE?.Compiler) {
         await new Promise<void>((resolve, reject) => {
@@ -84,33 +119,39 @@ export const CardsManagement = ({
         });
       }
 
-      setCompileStatus("Loading image...");
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = card.image;
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () =>
-          reject(new Error("Failed to load card image from URL"));
-      });
+      // Load all images
+      setCompileStatus(`Loading ${tierCards.length} images...`);
+      const loadedImages: HTMLImageElement[] = [];
 
-      setCompileStatus("Compiling...");
+      for (let i = 0; i < tierCards.length; i++) {
+        const card = tierCards[i];
+        setCompileStatus(`Loading image ${i + 1}/${tierCards.length}: ${card.name}...`);
+
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = card.image;
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () =>
+            reject(new Error(`Failed to load image for card "${card.name}" (${card.id})`));
+        });
+        loadedImages.push(img);
+      }
+
+      setCompileStatus(`Compiling ${tierCards.length} targets (this may take a minute)...`);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const compiler = new (window as any).MINDAR.IMAGE.Compiler();
-      await compiler.compileImageTargets([img], (progress: number) => {
-        setCompileStatus(`Compiling: ${Math.round(progress * 100)}%`);
+      await compiler.compileImageTargets(loadedImages, (progress: number) => {
+        setCompileStatus(`Compiling ${selectedTier}: ${Math.round(progress * 100)}%`);
       });
 
-      setCompileStatus("Exporting...");
+      setCompileStatus("Exporting .mind file...");
       const exportedBuffer = await compiler.exportData();
 
-      setCompileStatus("Saving...");
-      let tier = "common";
-      if (card.id.toLowerCase().startsWith("c1")) tier = "legendary";
-      else if (card.id.toLowerCase().startsWith("c2")) tier = "rare";
-
+      setCompileStatus(`Saving ${selectedTier.toLowerCase()}.mind on server...`);
+      const tierParam = selectedTier.toLowerCase();
       const res = await fetch(
-        `/api/targets?tier=${tier}&filename=${tier}.mind`,
+        `/api/targets?tier=${tierParam}&filename=${tierParam}.mind`,
         {
           method: "POST",
           headers: { "Content-Type": "application/octet-stream" },
@@ -120,39 +161,119 @@ export const CardsManagement = ({
 
       if (!res.ok) throw new Error("Failed to save target on server");
 
+      // Synchronize database targetIndex for every card
+      setCompileStatus("Synchronizing target indices with database...");
+      for (let i = 0; i < tierCards.length; i++) {
+        const card = tierCards[i];
+        if (card.targetIndex !== i) {
+          await fetch(`/api/cards/${card.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ targetIndex: i }),
+          });
+        }
+      }
+
       setCompileStatus("Done!");
-      alert(`Success! Card "${card.name}" compiled and saved to ${tier}.mind!`);
+      alert(
+        `Success! Compiled ${tierCards.length} ${selectedTier} cards into ${tierParam}.mind!\nTarget indices 0 to ${tierCards.length - 1} are active.`
+      );
+      window.location.reload();
     } catch (err: unknown) {
       console.error("Compile error:", err);
       const message = err instanceof Error ? err.message : String(err);
-      alert(`Error compiling AR target: ${message}`);
+      alert(`Error compiling ${selectedTier} AR targets: ${message}`);
     } finally {
-      setCompilingCardId(null);
+      setCompilingTier(null);
       setCompileStatus(null);
     }
   };
 
+  const legendaryCount = cards.filter((c) => c.tier === "Legendary" || c.id.toLowerCase().startsWith("c1")).length;
+  const rareCount = cards.filter((c) => c.tier === "Rare" || c.id.toLowerCase().startsWith("c2")).length;
+  const commonCount = cards.filter((c) => c.tier === "Common" || c.id.toLowerCase().startsWith("c3")).length;
+
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h3 className="text-xl font-semibold text-white">Cards</h3>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <h3 className="text-xl font-semibold text-white">Cards Management</h3>
+          <div className="flex bg-gray-900 border border-gray-700 rounded-lg p-0.5">
+            <button
+              onClick={() => setViewMode("table")}
+              className={`px-3 py-1 rounded-md text-xs font-mono font-bold transition-colors ${
+                viewMode === "table"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              📋 Cards Table
+            </button>
+            <button
+              onClick={() => setViewMode("synchronizer")}
+              className={`px-3 py-1 rounded-md text-xs font-mono font-bold transition-colors ${
+                viewMode === "synchronizer"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              🎯 Target Synchronizer
+            </button>
+          </div>
           {compileStatus && (
-            <p className="text-xs text-orange-400 font-mono animate-pulse">
-              {compileStatus}
+            <p className="text-xs text-orange-400 font-mono animate-pulse mt-1">
+              ⚡ {compileStatus}
             </p>
           )}
         </div>
-        <button
-          onClick={onAddCard}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md 
-                   transition-colors shadow-lg shadow-indigo-500/20"
-        >
-          Add New Card
-        </button>
+        <div className="flex flex-wrap gap-2 items-center">
+          <div className="flex items-center gap-1 bg-gray-900 border border-gray-700 rounded-md p-1">
+            <span className="text-xs text-gray-400 px-2 font-mono">Compile Tier:</span>
+            <button
+              onClick={() => handleCompileTier("Legendary")}
+              disabled={!!compilingTier || legendaryCount === 0}
+              className="px-2.5 py-1 bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 text-white rounded text-xs font-mono font-bold transition-colors"
+              title="Compile all Legendary cards into legendary.mind"
+            >
+              {compilingTier === "Legendary" ? "Compiling..." : `Legendary (${legendaryCount})`}
+            </button>
+            <button
+              onClick={() => handleCompileTier("Rare")}
+              disabled={!!compilingTier || rareCount === 0}
+              className="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded text-xs font-mono font-bold transition-colors"
+              title="Compile all Rare cards into rare.mind"
+            >
+              {compilingTier === "Rare" ? "Compiling..." : `Rare (${rareCount})`}
+            </button>
+            <button
+              onClick={() => handleCompileTier("Common")}
+              disabled={!!compilingTier || commonCount === 0}
+              className="px-2.5 py-1 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded text-xs font-mono font-bold transition-colors"
+              title="Compile all Common cards into common.mind"
+            >
+              {compilingTier === "Common" ? "Compiling..." : `Common (${commonCount})`}
+            </button>
+          </div>
+
+          <button
+            onClick={onAddCard}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md 
+                     transition-colors shadow-lg shadow-indigo-500/20 text-sm font-medium"
+          >
+            Add New Card
+          </button>
+        </div>
       </div>
 
-      {isLoading ? (
+      {viewMode === "synchronizer" ? (
+        <TargetSynchronizer
+          onAddCardWithTarget={onAddCardWithTarget}
+          onEditCard={(targetCard) => {
+            const found = cards.find((c) => c.id === targetCard.id);
+            if (found) onEditCard(found);
+          }}
+        />
+      ) : isLoading ? (
         <div className="text-center py-8">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
           <p className="mt-2 text-gray-400">Loading cards...</p>
@@ -175,10 +296,10 @@ export const CardsManagement = ({
                   Name
                 </th>
                 <th className="text-left px-4 py-3 text-sm font-semibold text-gray-300">
-                  Question
+                  Tier
                 </th>
                 <th className="text-left px-4 py-3 text-sm font-semibold text-gray-300">
-                  Tier
+                  Target Index
                 </th>
                 <th className="text-left px-4 py-3 text-sm font-semibold text-gray-300">
                   Status
@@ -203,12 +324,10 @@ export const CardsManagement = ({
                   <td className="px-4 py-3 text-sm text-white font-medium">
                     {card.name}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-400 max-w-md">
-                    <div className="line-clamp-2 break-words">
-                      {card.question}
-                    </div>
-                  </td>
                   <td className="px-4 py-3">{getTierBadge(card)}</td>
+                  <td className="px-4 py-3 text-xs font-mono font-bold text-amber-400">
+                    {typeof card.targetIndex === "number" ? `#${card.targetIndex}` : "—"}
+                  </td>
                   <td className="px-4 py-3">
                     {card.isCaught ? (
                       <span className="inline-flex items-center gap-1 bg-green-900/30 text-green-400 text-xs px-2 py-1 rounded-full border border-green-500/30">
@@ -229,17 +348,6 @@ export const CardsManagement = ({
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex gap-2 justify-end">
-                      <button
-                        onClick={() => handleCompileCard(card)}
-                        disabled={compilingCardId === card.id}
-                        className="px-2.5 py-1 bg-orange-600 hover:bg-orange-500 text-white rounded
-                                 transition-colors text-xs whitespace-nowrap font-mono font-bold"
-                        title="Compile card image into .mind file"
-                      >
-                        {compilingCardId === card.id
-                          ? compileStatus || "Compiling..."
-                          : "⚡ Compile AR"}
-                      </button>
                       <button
                         onClick={() => onEditCard(card)}
                         className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded

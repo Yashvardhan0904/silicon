@@ -214,18 +214,35 @@ async function POST(request) {
         }
         const newCardId = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$idGenerator$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["generateNextId"])('cards', prefix);
         const calculatedTier = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$types$2f$index$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["getTierFromValue"])(numericValue);
+        const assignedTier = body.tier || calculatedTier;
+        let targetIndex = body.targetIndex !== undefined && body.targetIndex !== null ? Number(body.targetIndex) : undefined;
+        if (targetIndex === undefined) {
+            const maxCard = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].card.findFirst({
+                where: {
+                    tier: assignedTier
+                },
+                orderBy: {
+                    targetIndex: 'desc'
+                },
+                select: {
+                    targetIndex: true
+                }
+            });
+            targetIndex = typeof maxCard?.targetIndex === 'number' ? maxCard.targetIndex + 1 : 0;
+        }
         const newCard = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].card.create({
             data: {
                 id: newCardId,
                 name: name.trim(),
                 value: numericValue,
-                tier: body.tier || calculatedTier,
+                tier: assignedTier,
                 image: image || '',
                 question: question.trim(),
                 options: options.map((opt)=>opt.trim()),
                 correctAnswer: Number(correctAnswer) || 0,
                 mindFile: mindFile || '',
                 modelUrl: modelUrl || '',
+                targetIndex,
                 isCaught: false,
                 caughtByTeam: ''
             }

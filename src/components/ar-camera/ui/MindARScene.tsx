@@ -2,7 +2,6 @@ import { createElement, MutableRefObject, useMemo } from "react";
 
 import {
   Character,
-  getTargetIndexFromId,
   MindARSceneElement,
   Tier,
   TIER_CONFIG,
@@ -82,27 +81,31 @@ export const MindARScene = ({
     }),
     // Render a target entity for each character in the selected tier
     characters.length > 0 &&
-      characters.map((character, index) => {
-        const idIndex = getTargetIndexFromId(character.id);
-        const targetIndex = idIndex >= 0 ? idIndex : index;
+      characters
+        .filter(
+          (character) =>
+            typeof character.targetIndex === "number" && character.targetIndex >= 0
+        )
+        .map((character) => {
+          const targetIndex = character.targetIndex as number;
 
-        return createElement(
-          "a-entity",
-          {
-            key: character.id,
-            ref: registerTargetRef(character.id, targetIndex),
-            "mindar-image-target": `targetIndex: ${targetIndex}`,
-          },
-          character.modelUrl &&
-            createElement("a-gltf-model", {
-              src: `#character-model-${character.id}`,
-              position: "0 0 0",
-              rotation: "60 0 0",
-              scale: "1 1 1",
-              "animation-mixer":
-                "clip: pm0149_00_00_20001_battlewait01_loop; loop: repeat",
-            })
-        );
-      })
+          return createElement(
+            "a-entity",
+            {
+              key: character.id,
+              ref: registerTargetRef(character.id, targetIndex),
+              "mindar-image-target": `targetIndex: ${targetIndex}`,
+            },
+            character.modelUrl &&
+              createElement("a-gltf-model", {
+                src: `#character-model-${character.id}`,
+                position: "0 0 0",
+                rotation: "60 0 0",
+                scale: "1 1 1",
+                "animation-mixer":
+                  "clip: pm0149_00_00_20001_battlewait01_loop; loop: repeat",
+              })
+          );
+        })
   );
 };
