@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import type { Team } from "@/types";
 
 interface LeaderboardProps {
@@ -8,6 +8,19 @@ interface LeaderboardProps {
   selectedTeamId: string | null;
   onTeamSelect?: (teamId: string) => void;
   isSelectable?: boolean;
+}
+
+function formatLastCaughtTime(timestamp?: string | Date | null): string {
+  if (!timestamp) return "No catches yet";
+  const date = new Date(timestamp);
+  if (isNaN(date.getTime())) return "No catches yet";
+
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
 }
 
 export default function Leaderboard({
@@ -18,6 +31,35 @@ export default function Leaderboard({
 }: LeaderboardProps) {
   const leaderboardRef = useRef<HTMLDivElement>(null);
   const selectedTeamRef = useRef<HTMLDivElement>(null);
+
+  // Sort teams:
+  // 1. Primary: Score descending
+  // 2. Tie-breaker: Whichever team achieved that score first (earlier lastCaughtAt)
+  // 3. Fallback: createdAt ascending
+  const sortedTeams = useMemo(() => {
+    return [...teams].sort((a, b) => {
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
+
+      const aTime = a.lastCaughtAt ? new Date(a.lastCaughtAt).getTime() : null;
+      const bTime = b.lastCaughtAt ? new Date(b.lastCaughtAt).getTime() : null;
+
+      if (aTime !== null && bTime !== null) {
+        if (aTime !== bTime) {
+          return aTime - bTime; // earlier timestamp achieves last point first
+        }
+      } else if (aTime !== null) {
+        return -1;
+      } else if (bTime !== null) {
+        return 1;
+      }
+
+      const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return aCreated - bCreated;
+    });
+  }, [teams]);
 
   // Scroll to selected team when it changes
   useEffect(() => {
@@ -43,12 +85,12 @@ export default function Leaderboard({
         ref={leaderboardRef}
         className="space-y-2 max-h-72 sm:max-h-80 overflow-y-auto pr-1 scrollbar-none"
       >
-        {teams.length === 0 ? (
+        {sortedTeams.length === 0 ? (
           <div className="text-center py-8 bg-zinc-950/50 border border-zinc-900 rounded-2xl">
             <p className="text-zinc-500 text-sm font-mono">No teams registered yet</p>
           </div>
         ) : (
-          teams.map((team, index) => {
+          sortedTeams.map((team, index) => {
             const isSelected = team.id === selectedTeamId;
             return (
               <div
@@ -105,11 +147,23 @@ export default function Leaderboard({
                       </div>
                     </div>
 
-                    {isSelected && (
-                      <div className="text-[10px] font-mono text-orange-400 font-semibold tracking-wider mt-0.5">
-                        YOUR SQUAD
-                      </div>
-                    )}
+                    <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
+                      {isSelected && (
+                        <span className="text-[10px] font-mono text-orange-400 font-semibold tracking-wider">
+                          YOUR SQUAD
+                        </span>
+                      )}
+                      <span className="text-[10px] font-mono text-zinc-400 flex items-center gap-1 truncate">
+                        <span className="text-zinc-500">⏱</span>
+                        <span className="text-zinc-500">Last caught:</span>
+                        <span
+                          suppressHydrationWarning
+                          className={team.lastCaughtAt ? "text-zinc-300 font-medium" : "text-zinc-600"}
+                        >
+                          {formatLastCaughtTime(team.lastCaughtAt)}
+                        </span>
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

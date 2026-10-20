@@ -3,6 +3,9 @@ export interface Team {
   teamName: string;
   score: number;
   cardsCaught: string[]; // Array of card IDs
+  lastCaughtAt?: string | Date | null;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 }
 
 export interface Card {

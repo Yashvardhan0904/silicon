@@ -40,6 +40,8 @@ export async function POST(request: Request, { params }: Params) {
         };
       }
 
+      const catchTime = new Date();
+
       // Mark card as caught
       await tx.card.update({
         where: { id: characterId },
@@ -49,7 +51,7 @@ export async function POST(request: Request, { params }: Params) {
         },
       });
 
-      // Update team document: score increment and add card to cardsCaught array
+      // Update team document: score increment, add card to cardsCaught array, and set lastCaughtAt
       const team = await tx.team.findUnique({
         where: { id: teamId },
       });
@@ -67,6 +69,7 @@ export async function POST(request: Request, { params }: Params) {
         data: {
           score: { increment: value },
           cardsCaught: updatedCardsCaught,
+          lastCaughtAt: catchTime,
         },
       });
 

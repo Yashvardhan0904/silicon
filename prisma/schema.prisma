@@ -9,12 +9,13 @@ generator client {
 }
 
 model Team {
-  id          String   @id
-  teamName    String
-  score       Int      @default(0)
-  cardsCaught String[] @default([])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String    @id
+  teamName     String
+  score        Int       @default(0)
+  cardsCaught  String[]  @default([])
+  lastCaughtAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@map("teams")
 }

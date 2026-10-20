@@ -42,6 +42,9 @@ export async function PUT(request: Request, { params }: Params) {
         ...(body.teamName !== undefined && { teamName: body.teamName.trim() }),
         ...(body.score !== undefined && { score: body.score }),
         ...(body.cardsCaught !== undefined && { cardsCaught: body.cardsCaught }),
+        ...(body.lastCaughtAt !== undefined && {
+          lastCaughtAt: body.lastCaughtAt ? new Date(body.lastCaughtAt) : null,
+        }),
       },
     });
 

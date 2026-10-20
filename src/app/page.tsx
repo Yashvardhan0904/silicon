@@ -27,21 +27,37 @@ export default function Home() {
   const [teamSearchQuery, setTeamSearchQuery] = useState("");
   const [activeBottomTab, setActiveBottomTab] = useState<"collection" | "leaderboard">("collection");
 
-  // Load teams
+  // Load teams with realtime polling
   useEffect(() => {
-    const fetchTeams = async () => {
+    let isMounted = true;
+
+    const fetchTeams = async (initial = false) => {
       try {
-        setIsLoadingTeams(true);
+        if (initial) setIsLoadingTeams(true);
         const teamsData = await getTeams();
-        setTeams(teamsData);
+        if (isMounted) {
+          setTeams(teamsData);
+        }
       } catch (error) {
         console.error("Error loading teams:", error);
       } finally {
-        setIsLoadingTeams(false);
+        if (initial && isMounted) {
+          setIsLoadingTeams(false);
+        }
       }
     };
 
-    fetchTeams();
+    fetchTeams(true);
+
+    // Poll every 3 seconds so leaderboard updates in realtime
+    const interval = setInterval(() => {
+      fetchTeams(false);
+    }, 3000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   // Load selected team from localStorage
@@ -76,6 +92,12 @@ export default function Home() {
 
   useEffect(() => {
     loadUncaughtCount();
+
+    const interval = setInterval(() => {
+      loadUncaughtCount();
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, [loadUncaughtCount]);
 
   useEffect(() => {

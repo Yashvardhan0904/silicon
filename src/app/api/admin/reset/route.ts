@@ -30,6 +30,7 @@ export async function POST(request: Request) {
           data: {
             score: 0,
             cardsCaught: [],
+            lastCaughtAt: null,
           },
         }),
       ]);
@@ -61,12 +62,14 @@ export async function POST(request: Request) {
               teamName: team.teamName,
               score: team.score,
               cardsCaught: team.cardsCaught || [],
+              lastCaughtAt: team.lastCaughtAt ? new Date(team.lastCaughtAt) : null,
             },
             create: {
               id: team.id,
               teamName: team.teamName,
               score: team.score,
               cardsCaught: team.cardsCaught || [],
+              lastCaughtAt: team.lastCaughtAt ? new Date(team.lastCaughtAt) : null,
             },
           });
         }
